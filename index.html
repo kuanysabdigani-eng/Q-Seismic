@@ -98,9 +98,9 @@
     <div class="container" id="mainContainer">
         <h1>Q-SEISMIC ALMATY</h1>
         <div class="subtitle">Система многоуровневого сейсмомониторинга</div>
-        
+
         <div class="status-box" id="statusBox">ВСЁ СПОКОЙНО</div>
-        
+
         <div class="timer" id="timerContainer">
             УДАР ЧЕРЕЗ:
             <span id="countdown">--</span>
@@ -115,6 +115,9 @@
         const ALMATY_LAT = 43.2389;
         const ALMATY_LON = 76.8897;
 
+        // ЗАМЕНИ ЭТУ СТРОКУ на реальную ссылку твоего бэкенда с Render (когда он запустится)
+        const BACKEND_URL = 'https://q-seismic.onrender.com/api/status';
+
         // Запрос разрешения на уведомления при загрузке страницы
         window.addEventListener('DOMContentLoaded', () => {
             if ("Notification" in window) {
@@ -126,6 +129,9 @@
                     });
                 }
             }
+            // Сразу запускаем опрос сервера и повторяем каждые 10 секунд
+            checkServerStatus();
+            setInterval(checkServerStatus, 10000);
         });
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -144,9 +150,9 @@
             const statusBox = document.getElementById('statusBox');
             const timerContainer = document.getElementById('timerContainer');
             const detailsText = document.getElementById('detailsText');
-            
+
             statusBox.innerText = `⚠️ ТРЕВОГА! ЗЕМЛЕТРЯСЕНИЕ!`;
-            
+
             // Отправка браузерного системного уведомления
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⚠️ Q-SEISMIC: ВНИМАНИЕ!", {
@@ -173,7 +179,7 @@
             clearInterval(countdownInterval);
             let timeLeft = seconds;
             const countdownEl = document.getElementById('countdown');
-            
+
             countdownInterval = setInterval(() => {
                 if (timeLeft > 0) {
                     countdownEl.innerText = timeLeft + " сек.";
@@ -185,7 +191,20 @@
             }, 1000);
         }
 
-        // Здесь в будущем будет код получения данных с бэкенда/API
+        // Автоматический опрос твоего бэкенда на Render
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(BACKEND_URL);
+                const data = await response.json();
+
+                if (data.status === "ALARM") {
+                    let isInstant = data.distance <= 30;
+                    handleEarthquakeUI(data.distance, data.magnitude, data.zone, isInstant);
+                }
+            } catch (error) {
+                console.log("Связь с сервером мониторинга устанавливается...");
+            }
+        }
     </script>
 </body>
 </html>
