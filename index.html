@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алматы — Система Раннего Предупреждения</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: background-color 0.5s ease;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 { font-size: 24px; margin-bottom: 10px; color: #94a3b8; }
+        .status-box {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #10b981; /* Зеленый по умолчанию */
+            color: white;
+            transition: background 0.3s;
+        }
+        .timer {
+            font-size: 64px;
+            font-weight: bold;
+            margin: 20px 0;
+            display: none;
+        }
+        .details {
+            font-size: 16px;
+            color: #cbd5e1;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+        /* Классы для смены состояния тревоги */
+        body.alarm-active {
+            background-color: #7f1d1d !important; /* Красный фон сайта */
+        }
+        body.alarm-active .status-box {
+            background-color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        .test-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+        .btn-safe { background: #3b82f6; }
+        .btn-warn { background: #eab308; color: black; }
+        .btn-crit { background: #dc2626; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <h1>СЕЙСМО-МОНИТОРИНГ АЛМАТЫ</h1>
+        <div class="status-box" id="statusBox">ВСЁ СПОКОЙНО</div>
+        
+        <div class="timer" id="timerContainer">
+            УДАР ЧЕРЕЗ: <span id="countdown">--</span> сек.
+        </div>
+
+        <div class="details" id="detailsText">
+            Система активна. Идет сканирование 3-х слоев защиты Тянь-Шаньского региона.
+        </div>
+
+        <!-- Кнопки для проверки (потом удалишь, когда подключишь реальный сервер) -->
+        <div class="test-buttons">
+            <button class="btn-safe" onclick="testAlarm('safe')">Сброс (ОК)</button>
+            <button class="btn-warn" onclick="testAlarm('warning')">Тест: Слой 2 (Средний)</button>
+            <button class="btn-crit" onclick="testAlarm('critical')">Тест: Слой 1 (Близко)</button>
+        </div>
+    </div>
+
+    <script>
+        const ALMATY_LAT = 43.2389;
+        const ALMATY_LON = 76.8897;
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // Функция обработки землетрясения в дизайне
+        function handleEarthquakeUI(distance, magnitude, layerName) {
+            document.body.classList.add('alarm-active');
+            const statusBox = document.getElementById('statusBox');
+            const timerContainer = document.getElementById('timerContainer');
+            const detailsText = document.getElementById('detailsText');
+            
+            statusBox.innerText = `⚠️ ТРЕВОГА! ЗЕМЛЕТРЯСЕНИЕ!`;
+            
+            if (distance <= 30) {
+                timerContainer.style.display = 'block';
+                document.getElementById('countdown').innerText = "ОКЕАН / СЕКУНДЫ";
+                detailsText.innerHTML = `Эпицентр в критической зоне (${distance.toFixed(1)} км). Удар почти мгновенный!`;
+            } else {
+                let seconds = Math.round(distance / 4); // расчет S-волны
+                timerContainer.style.display = 'block';
+                startCountdown(seconds);
+                detailsText.innerHTML = `Зона: <b>${layerName}</b><br>Расстояние: ${distance.toFixed(1)} км | Магнитуда: ${magnitude}`;
+            }
+        }
+
+        let countdownInterval;
+        function startCountdown(seconds) {
+            clearInterval(countdownInterval);
+            let timeLeft = seconds;
+            const countdownEl = document.getElementById('countdown');
+            
+            countdownInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    countdownEl.innerText = timeLeft;
+                    timeLeft--;
+                } else {
+                    countdownEl.innerText = "УДАР!";
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+
+        // Кнопки-симуляторы для проверки интерфейса прямо в браузере
+        function testAlarm(type) {
+            clearInterval(countdownInterval);
+            if (type === 'safe') {
+                document.body.classList.remove('alarm-active');
+                document.getElementById('statusBox').innerText = "ВСЁ СПОКОЙНО";
+                document.getElementById('timerContainer').style.display = 'none';
+                document.getElementById('detailsText').innerText = "Система активна. Идет сканирование 3-х слоев защиты.";
+            } else if (type === 'warning') {
+                handleEarthquakeUI(65, 4.6, "Слой 2 (Раннее предупреждение)");
+            } else if (type === 'critical') {
+                handleEarthquakeUI(15, 5.2, "Слой 1 (Критическая зона)");
+            }
+        }
+    </script>
+</body>
+</html>
