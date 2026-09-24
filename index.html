@@ -115,9 +115,6 @@
         const ALMATY_LAT = 43.2389;
         const ALMATY_LON = 76.8897;
 
-        // ЗАМЕНИ ЭТУ СТРОКУ на реальную ссылку твоего бэкенда с Render (когда он запустится)
-        const BACKEND_URL = 'https://q-seismic.onrender.com/api/status';
-
         // Запрос разрешения на уведомления при загрузке страницы
         window.addEventListener('DOMContentLoaded', () => {
             if ("Notification" in window) {
@@ -129,9 +126,9 @@
                     });
                 }
             }
-            // Сразу запускаем опрос сервера и повторяем каждые 10 секунд
-            checkServerStatus();
-            setInterval(checkServerStatus, 10000);
+            // Сразу проверяем землетрясения через API и повторяем каждые 15 секунд
+            checkDirectAPI();
+            setInterval(checkDirectAPI, 15000);
         });
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -144,7 +141,7 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // Функция запуска тревоги для сайта и отправки уведомления
+        // Функция запуска тревоги
         function handleEarthquakeUI(distance, magnitude, layerName, isInstant = false) {
             document.body.classList.add('alarm-active');
             const statusBox = document.getElementById('statusBox');
@@ -153,7 +150,6 @@
 
             statusBox.innerText = `⚠️ ТРЕВОГА! ЗЕМЛЕТРЯСЕНИЕ!`;
 
-            // Отправка браузерного системного уведомления
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⚠️ Q-SEISMIC: ВНИМАНИЕ!", {
                     body: `Зафиксирован толчок! Зона: ${layerName}. Расстояние до Алматы: ${distance.toFixed(1)} км.`,
@@ -191,18 +187,47 @@
             }, 1000);
         }
 
-        // Автоматический опрос твоего бэкенда на Render
-        async function checkServerStatus() {
+        // Прямой запрос к публичному API USGS прямо из браузера
+        async function checkDirectAPI() {
             try {
-                const response = await fetch(BACKEND_URL);
+                const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
                 const data = await response.json();
 
-                if (data.status === "ALARM") {
-                    let isInstant = data.distance <= 30;
-                    handleEarthquakeUI(data.distance, data.magnitude, data.zone, isInstant);
+                if (data && data.features) {
+                    for (const quake of data.features) {
+                        const coords = quake.geometry.coordinates; // [lon, lat, depth]
+                        const lon = coords[0];
+                        const lat = coords[1];
+                        const mag = quake.properties.mag;
+                        const time = quake.properties.time;
+
+                        // Проверяем свежесть (не старше 15 минут)
+                        const isRecent = (Date.now() - time) <= 15 * 60 * 1000;
+                        if (!isRecent) continue;
+
+                        const distance = calculateDistance(ALMATY_LAT, ALMATY_LON, lat, lon);
+
+                        // Логика слоев защиты
+                        if (distance <= 300 && mag >= 3.5) {
+                            let zoneName = "";
+                            let isInstant = false;
+
+                            if (distance <= 30) {
+                                zoneName = "Слой 1: Критическая зона (Алматы)";
+                                isInstant = true;
+                            } else if (distance <= 100) {
+                                zoneName = "Слой 2: Зона предупреждения (Ближний регион)";
+                            } else {
+                                zoneName = "Слой 3: Зона мониторинга (Тянь-Шань)";
+                            }
+
+                            handleEarthquakeUI(distance, mag, zoneName, isInstant);
+                            return; // Нашли тревогу, выходим
+                        }
+                    }
                 }
             } catch (error) {
-                console.log("Связь с сервером мониторинга устанавливается...");
+                console.log("Ожидание данных сети...");
             }
         }
     </script>
