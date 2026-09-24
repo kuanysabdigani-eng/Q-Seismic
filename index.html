@@ -73,6 +73,8 @@
             padding-top: 15px;
             border-top: 1px solid rgba(255,255,255,0.08);
             text-align: left;
+            max-height: 260px;
+            overflow-y: auto;
         }
         .feed-title {
             font-weight: bold;
@@ -125,8 +127,8 @@
         </div>
 
         <div class="details" id="detailsText">
-            <div class="feed-title">📡 Мониторинг региона в реальном времени</div>
-            <div id="quakeFeed">Подключение к сейсмосети USGS...</div>
+            <div class="feed-title">📡 Сканирование 3-х слоев защиты</div>
+            <div id="quakeFeed">Инициализация контуров Тянь-Шаня...</div>
         </div>
     </div>
 
@@ -137,11 +139,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             if ("Notification" in window) {
                 if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            console.log("Разрешение на уведомления получено.");
-                        }
-                    });
+                    Notification.requestPermission();
                 }
             }
             checkDirectAPI();
@@ -167,7 +165,7 @@
 
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⚠️ Q-SEISMIC: ВНИМАНИЕ!", {
-                    body: `Магнитуда: ${magnitude}. Место: ${place}. Расстояние: ${distance.toFixed(1)} км.`,
+                    body: `Магнитуда: ${magnitude}. Зона: ${layerName}. Расстояние: ${distance.toFixed(1)} км.`,
                     tag: "earthquake-alert",
                     requireInteraction: true
                 });
@@ -176,7 +174,7 @@
             if (isInstant) {
                 timerContainer.style.display = 'block';
                 document.getElementById('countdown').innerText = "МГНОВЕННО!";
-                document.getElementById('detailsText').innerHTML = `<b>${layerName}</b><br>📍 Место: ${place}<br>⚡ Магнитуда: <b>${magnitude}</b><br>📏 Расстояние: <b>${distance.toFixed(1)} км</b><br><span style="color:#fca5a5;">Критическая зона, удар мгновенный!</span>`;
+                document.getElementById('detailsText').innerHTML = `<b>${layerName}</b><br>📍 Место: ${place}<br>⚡ Магнитуда: <b>${magnitude}</b><br>📏 Расстояние: <b>${distance.toFixed(1)} км</b>`;
             } else {
                 let seconds = Math.round(distance / 4);
                 timerContainer.style.display = 'block';
@@ -204,52 +202,55 @@
 
         async function checkDirectAPI() {
             try {
-                const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson');
+                // Запрашиваем данные за последние сутки для охвата всех 3 слоев
+                const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
                 const data = await response.json();
 
-                let feedHTML = `<div class="feed-title">📡 Мониторинг региона (Тянь-Шань)</div>`;
+                let feedHTML = `<div class="feed-title">📡 Контуры Тянь-Шаня (3 слоя)</div>`;
                 let alarmTriggered = false;
+                let foundEvents = 0;
 
-                if (data && data.features && data.features.length > 0) {
-                    let nearbyQuakes = 0;
-
+                if (data && data.features) {
                     for (const quake of data.features) {
                         const coords = quake.geometry.coordinates; 
                         const lon = coords[0];
                         const lat = coords[1];
                         const mag = quake.properties.mag;
                         const place = quake.properties.place || "Регион эпицентра";
-                        const time = quake.properties.time;
 
                         const distance = calculateDistance(ALMATY_LAT, ALMATY_LON, lat, lon);
 
-                        // Выводим в ленту все толчки в радиусе 1000 км за последний час
-                        if (distance <= 1000) {
-                            nearbyQuakes++;
+                        // Проверяем принадлежность к контурам (в пределах 500 км охватываем все 3 слоя защиты)
+                        if (distance <= 500) {
+                            foundEvents++;
+                            let layerBadge = "";
+                            if (distance <= 30) layerBadge = "Слой 1 (Критический)";
+                            else if (distance <= 100) layerBadge = "Слой 2 (Предупреждение)";
+                            else layerBadge = "Слой 3 (Мониторинг)";
+
                             feedHTML += `
                                 <div class="quake-item">
-                                    📍 <b>${place}</b><br>
-                                    ⚡ Магнитуда: <b>${mag.toFixed(1)}</b> | 📏 Расстояние: <b>${distance.toFixed(1)} км</b>
+                                    🌐 <b>${layerBadge}</b><br>
+                                    📍 ${place}<br>
+                                    ⚡ Магнитуда: <b>${mag.toFixed(1)}</b> | 📏 ${distance.toFixed(0)} км
                                 </div>
                             `;
+                            if (foundEvents >= 4) break; // Показываем до 4 последних событий в контурах
+                        }
 
-                            // Проверяем условия для включения сирены и тревоги
-                            if (distance <= 300 && mag >= 3.5 && !alarmTriggered) {
-                                alarmTriggered = true;
-                                let zoneName = distance <= 30 ? "Слой 1: Критическая зона (Алматы)" : (distance <= 100 ? "Слой 2: Зона предупреждения" : "Слой 3: Зона мониторинга");
-                                handleAlarmState(distance, mag, place, zoneName, distance <= 30);
-                            }
+                        // Логика срабатывания тревоги для Слоя 1 и Слоя 2
+                        if (distance <= 300 && mag >= 3.5 && !alarmTriggered) {
+                            alarmTriggered = true;
+                            let zoneName = distance <= 30 ? "Слой 1: Критическая зона" : (distance <= 100 ? "Слой 2: Зона предупреждения" : "Слой 3: Зона мониторинга");
+                            handleAlarmState(distance, mag, place, zoneName, distance <= 30);
                         }
                     }
 
-                    if (nearbyQuakes === 0) {
-                        feedHTML += `<div style="color: #94a3b8; text-align: center; padding: 10px; font-size: 13px;">За последний час толчков поблизости нет. Сеть активна.</div>`;
+                    if (foundEvents === 0) {
+                        feedHTML += `<div style="color: #94a3b8; text-align: center; padding: 10px; font-size: 13px;">Все 3 контура активны. В радиусе 500 км толчков не зафиксировано.</div>`;
                     }
-                } else {
-                    feedHTML += `<div style="color: #94a3b8; text-align: center; padding: 10px; font-size: 13px;">Сканирование сети активто...</div>`;
                 }
 
-                // Обновляем ленту только если нет активной тревоги
                 if (!document.body.classList.contains('alarm-active')) {
                     document.getElementById('detailsText').innerHTML = feedHTML;
                 }
@@ -261,4 +262,5 @@
     </script>
 </body>
 </html>
+
 
