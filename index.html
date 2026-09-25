@@ -124,6 +124,15 @@
             border-left: 3px solid #38bdf8;
             font-size: 13px;
         }
+        .disclaimer {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 15px;
+            text-align: center;
+            line-height: 1.3;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 10px;
+        }
         /* Состояние тревоги */
         body.alarm-active {
             background-color: #7f1d1d !important;
@@ -149,7 +158,7 @@
     <div class="container" id="mainContainer">
         <h1>Q-SEISMIC ALMATY</h1>
         <div class="subtitle">Система многоуровневого сейсмомониторинга</div>
-        
+
         <div class="live-indicator">
             <div class="pulse-dot"></div>
             <span>Авто-опрос USGS (каждые 15 сек)</span>
@@ -166,6 +175,10 @@
             <div class="feed-title">📡 Сканирование 3-х слоев защиты</div>
             <div class="last-checked" id="lastCheckedTime">Статус: подключение к серверам...</div>
             <div id="quakeFeed">Инициализация контуров Тянь-Шаня...</div>
+        </div>
+
+        <div class="disclaimer">
+            Данные транслируются в режиме реального времени на базе открытого API USGS. Сервис носит информационный характер.
         </div>
     </div>
 
@@ -197,7 +210,7 @@
             document.body.classList.add('alarm-active');
             const statusBox = document.getElementById('statusBox');
             const timerContainer = document.getElementById('timerContainer');
-            
+
             statusBox.innerText = `⚠️ ТРЕВОГА! ЗЕМЛЕТРЯСЕНИЕ!`;
 
             if ("Notification" in window && Notification.permission === "granted") {
@@ -245,7 +258,7 @@
                 const now = new Date();
                 const timeString = now.toLocaleTimeString();
                 let timeLogHtml = `<div class="last-checked">🔄 Последняя проверка: ${timeString} (данные USGS актуальны)</div>`;
-                
+
                 let feedHTML = `<div class="feed-title">📡 Контуры Тянь-Шаня (3 слоя суточных данных)</div>` + timeLogHtml;
                 let alarmTriggered = false;
                 let foundEvents = 0;
@@ -301,5 +314,6 @@
     </script>
 </body>
 </html>
+
 
 
