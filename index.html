@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Q-Seismic Almaty — Система Раннего Предупреждения</title>
+    <title>Q-Seismic Almaty — Early Warning System</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
@@ -42,7 +42,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        /* Индикатор живого сканирования */
+        /* Live scanning indicator */
         .live-indicator {
             display: flex;
             align-items: center;
@@ -133,7 +133,7 @@
             border-top: 1px solid rgba(255,255,255,0.05);
             padding-top: 10px;
         }
-        /* Состояние тревоги */
+        /* Alarm state */
         body.alarm-active {
             background-color: #7f1d1d !important;
         }
@@ -157,28 +157,28 @@
 
     <div class="container" id="mainContainer">
         <h1>Q-SEISMIC ALMATY</h1>
-        <div class="subtitle">Система многоуровневого сейсмомониторинга</div>
+        <div class="subtitle">Multi-Layer Seismic Monitoring System</div>
 
         <div class="live-indicator">
             <div class="pulse-dot"></div>
-            <span>Авто-опрос USGS (каждые 15 сек)</span>
+            <span>USGS Auto-Poll (Every 15s)</span>
         </div>
 
-        <div class="status-box" id="statusBox">ВСЁ СПОКОЙНО</div>
+        <div class="status-box" id="statusBox">ALL CLEAR</div>
 
         <div class="timer" id="timerContainer">
-            УДАР ЧЕРЕЗ:
+            IMPACT IN:
             <span id="countdown">--</span>
         </div>
 
         <div class="details" id="detailsText">
-            <div class="feed-title">📡 Сканирование 3-х слоев защиты</div>
-            <div class="last-checked" id="lastCheckedTime">Статус: подключение к серверам...</div>
-            <div id="quakeFeed">Инициализация контуров Тянь-Шаня...</div>
+            <div class="feed-title">📡 Scanning 3 Defense Layers</div>
+            <div class="last-checked" id="lastCheckedTime">Status: connecting to servers...</div>
+            <div id="quakeFeed">Initializing Tien Shan contours...</div>
         </div>
 
         <div class="disclaimer">
-            Данные транслируются в режиме реального времени на базе открытого API USGS. Сервис носит информационный характер.
+            Real-time data broadcast powered by the open USGS API. For informational purposes only.
         </div>
     </div>
 
@@ -211,11 +211,11 @@
             const statusBox = document.getElementById('statusBox');
             const timerContainer = document.getElementById('timerContainer');
 
-            statusBox.innerText = `⚠️ ТРЕВОГА! ЗЕМЛЕТРЯСЕНИЕ!`;
+            statusBox.innerText = `⚠️ ALERT! EARTHQUAKE DETECTED!`;
 
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("⚠️ Q-SEISMIC: ВНИМАНИЕ!", {
-                    body: `Магнитуда: ${magnitude}. Зона: ${layerName}. Расстояние: ${distance.toFixed(1)} км.`,
+                new Notification("⚠️ Q-SEISMIC: WARNING!", {
+                    body: `Magnitude: ${magnitude}. Zone: ${layerName}. Distance: ${distance.toFixed(1)} km.`,
                     tag: "earthquake-alert",
                     requireInteraction: true
                 });
@@ -223,13 +223,13 @@
 
             if (isInstant) {
                 timerContainer.style.display = 'block';
-                document.getElementById('countdown').innerText = "МГНОВЕННО!";
-                document.getElementById('detailsText').innerHTML = `<b>${layerName}</b><br>📍 Место: ${place}<br>⚡ Магнитуда: <b>${magnitude}</b><br>📏 Расстояние: <b>${distance.toFixed(1)} км</b>`;
+                document.getElementById('countdown').innerText = "INSTANT!";
+                document.getElementById('detailsText').innerHTML = `<b>${layerName}</b><br>📍 Location: ${place}<br>⚡ Magnitude: <b>${magnitude}</b><br>📏 Distance: <b>${distance.toFixed(1)} km</b>`;
             } else {
                 let seconds = Math.round(distance / 4);
                 timerContainer.style.display = 'block';
                 startCountdown(seconds);
-                document.getElementById('detailsText').innerHTML = `<b>${layerName}</b><br>📍 Место: ${place}<br>⚡ Магнитуда: <b>${magnitude}</b><br>📏 Расстояние: <b>${distance.toFixed(1)} км</b>`;
+                document.getElementById('detailsText').innerHTML = `<b>${layerName}</b><br>📍 Location: ${place}<br>⚡ Magnitude: <b>${magnitude}</b><br>📏 Distance: <b>${distance.toFixed(1)} km</b>`;
             }
         }
 
@@ -241,10 +241,10 @@
 
             countdownInterval = setInterval(() => {
                 if (timeLeft > 0) {
-                    countdownEl.innerText = timeLeft + " сек.";
+                    countdownEl.innerText = timeLeft + " sec.";
                     timeLeft--;
                 } else {
-                    countdownEl.innerText = "УДАР!";
+                    countdownEl.innerText = "IMPACT!";
                     clearInterval(countdownInterval);
                 }
             }, 1000);
@@ -257,9 +257,9 @@
 
                 const now = new Date();
                 const timeString = now.toLocaleTimeString();
-                let timeLogHtml = `<div class="last-checked">🔄 Последняя проверка: ${timeString} (данные USGS актуальны)</div>`;
+                let timeLogHtml = `<div class="last-checked">🔄 Last check: ${timeString} (USGS data live)</div>`;
 
-                let feedHTML = `<div class="feed-title">📡 Контуры Тянь-Шаня (3 слоя суточных данных)</div>` + timeLogHtml;
+                let feedHTML = `<div class="feed-title">📡 Tien Shan Contours (3 24h Layers)</div>` + timeLogHtml;
                 let alarmTriggered = false;
                 let foundEvents = 0;
 
@@ -269,22 +269,22 @@
                         const lon = coords[0];
                         const lat = coords[1];
                         const mag = quake.properties.mag;
-                        const place = quake.properties.place || "Регион эпицентра";
+                        const place = quake.properties.place || "Epicenter region";
 
                         const distance = calculateDistance(ALMATY_LAT, ALMATY_LON, lat, lon);
 
                         if (distance <= 500) {
                             foundEvents++;
                             let layerBadge = "";
-                            if (distance <= 30) layerBadge = "Слой 1 (Критический)";
-                            else if (distance <= 100) layerBadge = "Слой 2 (Предупреждение)";
-                            else layerBadge = "Слой 3 (Мониторинг)";
+                            if (distance <= 30) layerBadge = "Layer 1 (Critical)";
+                            else if (distance <= 100) layerBadge = "Layer 2 (Warning)";
+                            else layerBadge = "Layer 3 (Monitoring)";
 
                             feedHTML += `
                                 <div class="quake-item">
                                     🌐 <b>${layerBadge}</b><br>
                                     📍 ${place}<br>
-                                    ⚡ Магнитуда: <b>${mag.toFixed(1)}</b> | 📏 ${distance.toFixed(0)} км
+                                    ⚡ Magnitude: <b>${mag.toFixed(1)}</b> | 📏 ${distance.toFixed(0)} km
                                 </div>
                             `;
                             if (foundEvents >= 4) break; 
@@ -292,13 +292,13 @@
 
                         if (distance <= 300 && mag >= 3.5 && !alarmTriggered) {
                             alarmTriggered = true;
-                            let zoneName = distance <= 30 ? "Слой 1: Критическая зона" : (distance <= 100 ? "Слой 2: Зона предупреждения" : "Слой 3: Зона мониторинга");
+                            let zoneName = distance <= 30 ? "Layer 1: Critical Zone" : (distance <= 100 ? "Layer 2: Warning Zone" : "Layer 3: Monitoring Zone");
                             handleAlarmState(distance, mag, place, zoneName, distance <= 30);
                         }
                     }
 
                     if (foundEvents === 0) {
-                        feedHTML += `<div style="color: #94a3b8; text-align: center; padding: 10px; font-size: 13px;">Все 3 контура активны. В радиусе 500 км толчков не зафиксировано.</div>`;
+                        feedHTML += `<div style="color: #94a3b8; text-align: center; padding: 10px; font-size: 13px;">All 3 contours active. No seismic activity within 500 km.</div>`;
                     }
                 }
 
@@ -307,8 +307,8 @@
                 }
 
             } catch (error) {
-                console.log("Ожидание данных сети...");
-                document.getElementById('lastCheckedTime').innerText = "⚠️ Ошибка соединения с USGS, повтор...";
+                console.log("Waiting for network data...");
+                document.getElementById('lastCheckedTime').innerText = "⚠️ USGS connection error, retrying...";
             }
         }
     </script>
