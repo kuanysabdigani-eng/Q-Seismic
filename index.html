@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q-Seismic Almaty — Early Warning System</title>
-    <!-- Мета-теги для полноэкранного PWA-режима при добавлении на главный экран -->
+    
+    <!-- Ссылка на манифест для добавления на главный экран -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Мета-теги для полноэкранного PWA-режима -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -458,8 +462,6 @@
             isEmergencyActive = true; 
             document.body.classList.add('alarm-active');
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
-
-            const detailMessage = `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.getTotal ? magnitude.toFixed(1) : magnitude}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км`;
 
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⚠️ Q-SEISMIC WARNING", { body: `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.toFixed(1)}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км` });
