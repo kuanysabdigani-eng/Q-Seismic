@@ -386,10 +386,10 @@
     <!-- Всплывающее окно (Модалка) -->
     <div class="modal-overlay" id="tgModal">
         <div class="modal-box">
-            <div class="modal-title">🚨 Сейсмо-мониторинг Алматы</div>
-            <div class="modal-text">Официальные датчики запаздывают. Жители пишут реальную обстановку в нашем Telegram-чате раньше всех. Присоединяйся!</div>
+            <div class="modal-title" id="modalTitle">🚨 Сейсмо-мониторинг Алматы</div>
+            <div class="modal-text" id="modalText">Официальные датчики запаздывают. Жители пишут реальную обстановку в нашем Telegram-чате раньше всех. Присоединяйся!</div>
             <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="modal-btn" onclick="closeModal()">💬 ВОЙТИ В СЕЙСМО-ЧАТ</a>
-            <button class="modal-close" onclick="closeModal()">Продолжить просмотр сайта</button>
+            <button class="modal-close" onclick="handleSecondModal()">Продолжить просмотр сайта</button>
         </div>
     </div>
 
@@ -437,7 +437,7 @@
                 <button class="district-btn" onclick="selectDistrict('Медеуский', this)">Медеу <span class="district-count" id="count-med">3</span></button>
                 <button class="district-btn" onclick="selectDistrict('Алмалинский', this)">Алмалы <span class="district-count" id="count-alm">5</span></button>
                 <button class="district-btn" onclick="selectDistrict('Ауэзовский', this)">Ауэзов <span class="district-count" id="count-auz">3</span></button>
-                <button class="district-btn" onclick="selectDistrict('Наурызбайский', this)">Наурызбай <span class="district-count" id="count-naur">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Наурызбайский', this, 'Наурызбай <span class="district-count" id="count-naur">1</span>')">Наурызбай <span class="district-count" id="count-naur">1</span></button>
                 <button class="district-btn" onclick="selectDistrict('Алатауский', this)">Алатау <span class="district-count" id="count-alat">2</span></button>
                 <button class="district-btn" onclick="selectDistrict('Жетысуский', this)">Жетысу <span class="district-count" id="count-zhet">1</span></button>
                 <button class="district-btn" onclick="selectDistrict('Турксибский', this)">Турксиб <span class="district-count" id="count-turk">1</span></button>
@@ -486,6 +486,7 @@
         const ALMATY_LON = 76.8897;
 
         let isEmergencyActive = false; 
+        let modalStep = 1; // 1 - первое окно, 2 - второе повторное окно
 
         let districtCounts = { 
             'Бостандыкский': 4, 
@@ -516,9 +517,8 @@
                 Notification.requestPermission();
             }
 
-            // Показываем всплывающее окно через 4 секунды после захода на сайт
+            // Показываем первое всплывающее окно через 4 секунды
             setTimeout(() => {
-                // Показывать только один раз за сессию, чтобы не надоедать
                 if (!sessionStorage.getItem('modalShown')) {
                     document.getElementById('tgModal').classList.add('active');
                     sessionStorage.setItem('modalShown', 'true');
@@ -531,6 +531,18 @@
 
         function closeModal() {
             document.getElementById('tgModal').classList.remove('active');
+        }
+
+        // Логика второго окна при закрытии первого
+        function handleSecondModal() {
+            if (modalStep === 1) {
+                modalStep = 2;
+                // Меняем текст на второй, более убедительный призыв
+                document.getElementById('modalTitle').innerText = "⚠️ Уведомления могут не прийти";
+                document.getElementById('modalText').innerText = "У браузера нет встроенной сирены. Вся реальная обстановка, отчеты жителей и предупреждения о толчках публикуются только в Telegram-чате. Перейди, чтобы быть в безопасности!";
+            } else {
+                document.getElementById('tgModal').classList.remove('active');
+            }
         }
 
         function testBrowserPush() {
@@ -634,6 +646,7 @@
     </script>
 </body>
 </html>
+
 
 
 
