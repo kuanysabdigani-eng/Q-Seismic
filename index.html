@@ -334,6 +334,8 @@
         const ALMATY_LAT = 43.2389;
         const ALMATY_LON = 76.8897;
 
+        let isEmergencyActive = false; // Флаг для блокировки статусных пушей при тревоге
+
         let districtCounts = { 
             'Бостандыкский': 4, 
             'Медеуский': 3, 
@@ -346,13 +348,12 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Реальный подсчет посетителей, начиная с 20 базы
+            // Подсчет посетителей, начиная с 20
             let visits = localStorage.getItem('q_seismic_visits');
             if (!visits) {
                 visits = 20;
                 localStorage.setItem('q_seismic_visits', visits);
             } else {
-                // Если сессия новая для этого браузера, можно аккуратно инкрементировать
                 if (!sessionStorage.getItem('counted')) {
                     visits = parseInt(visits) + 1;
                     localStorage.setItem('q_seismic_visits', visits);
@@ -364,6 +365,9 @@
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
             }
+
+            // Проверка пуша 3 раза в день (утро, обед, вечер) с защитой от отправки при тревоге
+            checkTriDailyStatusPush();
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -386,6 +390,39 @@
             checkDirectAPI();
             setInterval(checkDirectAPI, 15000);
         });
+
+        function checkTriDailyStatusPush() {
+            // Если зафиксирована тревога, дружелюбный пуш полностью блокируется
+            if (isEmergencyActive) return;
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                const hour = new Date().getHours();
+                let period = '';
+                
+                if (hour >= 6 && hour < 12) {
+                    period = 'morning';
+                } else if (hour >= 12 && hour < 18) {
+                    period = 'afternoon';
+                } else {
+                    period = 'evening';
+                }
+
+                const today = new Date().toDateString();
+                const lastPushKey = `q_push_${today}_${period}`;
+
+                if (!localStorage.getItem(lastPushKey)) {
+                    setTimeout(() => {
+                        // Дополнительная проверка перед самым отправлением
+                        if (!isEmergencyActive) {
+                            new Notification("Q-Seismic Almaty", { 
+                                body: "Тянь-Шань в норме, обстановка стабильная. Все контуры под контролем." 
+                            });
+                            localStorage.setItem(lastPushKey, 'true');
+                        }
+                    }, 3000);
+                }
+            }
+        }
 
         function selectDistrict(name, btnElement) {
             document.querySelectorAll('.district-btn').forEach(b => b.classList.remove('active'));
@@ -428,6 +465,7 @@
         }
 
         function handleAlarmState(distance, magnitude, place, layerName, isInstant) {
+            isEmergencyActive = true; // Активируем флаг тревоги, блокирующий спокойные статусы
             document.body.classList.add('alarm-active');
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
             if ("Notification" in window && Notification.permission === "granted") {
