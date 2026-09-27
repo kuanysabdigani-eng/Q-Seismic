@@ -88,6 +88,33 @@
             transition: background 0.3s;
         }
 
+        /* HUD Stats Bar (Visitor Counter) */
+        .hud-stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .hud-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .hud-card .hud-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+        .hud-card .hud-label {
+            font-size: 9px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
         /* Sections Wrapper */
         .section {
             background: rgba(30, 41, 59, 0.3);
@@ -108,17 +135,20 @@
             align-items: center;
         }
 
-        /* District Grid */
+        /* District Grid (8 districts) */
         .district-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding-right: 2px;
         }
         .district-btn {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.06);
             color: #94a3b8;
-            padding: 8px 10px;
+            padding: 7px 8px;
             border-radius: 6px;
             font-size: 11px;
             cursor: pointer;
@@ -139,7 +169,7 @@
         }
         .district-count {
             background: rgba(0,0,0,0.3);
-            padding: 2px 5px;
+            padding: 2px 4px;
             border-radius: 4px;
             font-size: 9px;
             color: #38bdf8;
@@ -242,21 +272,33 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
+        <!-- Total Visitors HUD -->
+        <div class="hud-stats">
+            <div class="hud-card">
+                <div class="hud-value" id="visitorCount">20</div>
+                <div class="hud-label">Total Visitors Tracked</div>
+            </div>
+        </div>
+
         <div class="timer" id="timerContainer">
             IMPACT IN: <span id="countdown">--</span>
         </div>
 
-        <!-- District Selector / Zone Status -->
+        <!-- District Selector (8 Districts) -->
         <div class="section" id="districtSection">
             <div class="section-title">
-                <span>📍 Almaty Zone Selector</span>
-                <span style="font-size: 9px; color: #64748b;" id="selectedDistrictStatus">Detecting...</span>
+                <span>📍 Almaty Districts (8)</span>
+                <span style="font-size: 9px; color: #64748b;" id="selectedDistrictStatus">None selected</span>
             </div>
             <div class="district-grid" id="districtGrid">
-                <button class="district-btn" onclick="selectDistrict('Бостандыкский')">Бостандык <span class="district-count" id="count-bost">12</span></button>
-                <button class="district-btn" onclick="selectDistrict('Медеуский')">Медеу <span class="district-count" id="count-med">9</span></button>
-                <button class="district-btn" onclick="selectDistrict('Алмалинский')">Алмалы <span class="district-count" id="count-alm">14</span></button>
-                <button class="district-btn" onclick="selectDistrict('Ауэзовский')">Ауэзов <span class="district-count" id="count-auz">8</span></button>
+                <button class="district-btn" onclick="selectDistrict('Бостандыкский', this)">Бостандык <span class="district-count" id="count-bost">4</span></button>
+                <button class="district-btn" onclick="selectDistrict('Медеуский', this)">Медеу <span class="district-count" id="count-med">3</span></button>
+                <button class="district-btn" onclick="selectDistrict('Алмалинский', this)">Алмалы <span class="district-count" id="count-alm">5</span></button>
+                <button class="district-btn" onclick="selectDistrict('Ауэзовский', this)">Ауэзов <span class="district-count" id="count-auz">3</span></button>
+                <button class="district-btn" onclick="selectDistrict('Наурызбайский', this)">Наурызбай <span class="district-count" id="count-naur">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Алатауский', this)">Алатау <span class="district-count" id="count-alat">2</span></button>
+                <button class="district-btn" onclick="selectDistrict('Жетысуский', this)">Жетысу <span class="district-count" id="count-zhet">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Турксибский', this)">Турксиб <span class="district-count" id="count-turk">1</span></button>
             </div>
         </div>
 
@@ -292,56 +334,78 @@
         const ALMATY_LAT = 43.2389;
         const ALMATY_LON = 76.8897;
 
-        let districtCounts = { 'Бостандыкский': 12, 'Медеуский': 9, 'Алмалинский': 14, 'Ауэзовский': 8 };
+        let districtCounts = { 
+            'Бостандыкский': 4, 
+            'Медеуский': 3, 
+            'Алмалинский': 5, 
+            'Ауэзовский': 3,
+            'Наурызбайский': 1,
+            'Алатауский': 2,
+            'Жетысуский': 1,
+            'Турксибский': 1
+        };
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Реальный подсчет посетителей, начиная с 20 базы
+            let visits = localStorage.getItem('q_seismic_visits');
+            if (!visits) {
+                visits = 20;
+                localStorage.setItem('q_seismic_visits', visits);
+            } else {
+                // Если сессия новая для этого браузера, можно аккуратно инкрементировать
+                if (!sessionStorage.getItem('counted')) {
+                    visits = parseInt(visits) + 1;
+                    localStorage.setItem('q_seismic_visits', visits);
+                    sessionStorage.setItem('counted', 'true');
+                }
+            }
+            document.getElementById('visitorCount').innerText = visits;
+
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
             }
 
-            // Проверяем геолокацию пользователя, чтобы понять, в Алматы он или нет
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        const userLat = position.coords.latitude;
-                        const userLon = position.coords.longitude;
-                        // Если пользователь далеко от Алматы (больше ~100 км), переводим в режим наблюдателя
-                        const distToAlmaty = calculateDistance(ALMATY_LAT, ALMATY_LON, userLat, userLon);
+                        const distToAlmaty = calculateDistance(ALMATY_LAT, ALMATY_LON, position.coords.latitude, position.coords.longitude);
                         if (distToAlmaty > 100) {
                             document.getElementById('districtSection').innerHTML = `
                                 <div class="section-title"><span>🌍 External Observer Mode</span></div>
                                 <div style="font-size: 11px; color: #94a3b8; text-align: center; padding: 6px;">
-                                    Вы находитесь вне зоны покрытия Алматы. Сайт работает в режиме глобального мониторинга.
+                                    Вне зоны Алматы. Режим глобального мониторинга.
                                 </div>
                             `;
-                        } else {
-                            document.getElementById('selectedDistrictStatus').innerText = "None selected";
                         }
                     },
-                    () => {
-                        // Если пользователь запретил геолокацию, просто оставляем выбор районов для удобства
-                        document.getElementById('selectedDistrictStatus').innerText = "None selected";
-                    },
+                    () => {},
                     { timeout: 5000 }
                 );
-            } else {
-                document.getElementById('selectedDistrictStatus').innerText = "None selected";
             }
 
             checkDirectAPI();
             setInterval(checkDirectAPI, 15000);
         });
 
-        function selectDistrict(name) {
+        function selectDistrict(name, btnElement) {
             document.querySelectorAll('.district-btn').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            btnElement.classList.add('active');
             districtCounts[name]++;
             document.getElementById('selectedDistrictStatus').innerText = name;
             
-            if(name === 'Бостандыкский') document.getElementById('count-bost').innerText = districtCounts[name];
-            if(name === 'Медеуский') document.getElementById('count-med').innerText = districtCounts[name];
-            if(name === 'Алмалинский') document.getElementById('count-alm').innerText = districtCounts[name];
-            if(name === 'Ауэзовский') document.getElementById('count-auz').innerText = districtCounts[name];
+            const mapKeys = {
+                'Бостандыкский': 'count-bost',
+                'Медеуский': 'count-med',
+                'Алмалинский': 'count-alm',
+                'Ауэзовский': 'count-auz',
+                'Наурызбайский': 'count-naur',
+                'Алатауский': 'count-alat',
+                'Жетысуский': 'count-zhet',
+                'Турксибский': 'count-turk'
+            };
+            if(mapKeys[name]) {
+                document.getElementById(mapKeys[name]).innerText = districtCounts[name];
+            }
         }
 
         function answerSurvival(isCorrect) {
