@@ -358,6 +358,15 @@
     </div>
 
     <script>
+        // Регистрация Service Worker для поддержки PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('SW registered:', reg.scope))
+                    .catch((err) => console.log('SW error:', err));
+            });
+        }
+
         const ALMATY_LAT = 43.2389;
         const ALMATY_LON = 76.8897;
 
@@ -450,10 +459,10 @@
             document.body.classList.add('alarm-active');
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
 
-            const detailMessage = `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.toFixed(1)}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км`;
+            const detailMessage = `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.getTotal ? magnitude.toFixed(1) : magnitude}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км`;
 
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("⚠️ Q-SEISMIC WARNING", { body: detailMessage });
+                new Notification("⚠️ Q-SEISMIC WARNING", { body: `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.toFixed(1)}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км` });
             }
 
             document.getElementById('timerContainer').style.display = 'block';
@@ -499,7 +508,6 @@
     </script>
 </body>
 </html>
-
 
 
 
