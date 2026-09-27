@@ -88,33 +88,6 @@
             transition: background 0.3s;
         }
 
-        /* HUD Stats Bar */
-        .hud-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .hud-card {
-            background: rgba(30, 41, 59, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-        }
-        .hud-card .hud-value {
-            font-size: 15px;
-            font-weight: bold;
-            color: #38bdf8;
-        }
-        .hud-card .hud-label {
-            font-size: 9px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
-
         /* Sections Wrapper */
         .section {
             background: rgba(30, 41, 59, 0.3);
@@ -269,29 +242,17 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
-        <!-- HUD Stats -->
-        <div class="hud-stats">
-            <div class="hud-card">
-                <div class="hud-value" id="userCount">...</div>
-                <div class="hud-label">Total Visits</div>
-            </div>
-            <div class="hud-card">
-                <div class="hud-value" id="pulseTicker" style="font-size: 11px; font-weight: normal; color: #94a3b8;">Syncing...</div>
-                <div class="hud-label">System Pulse</div>
-            </div>
-        </div>
-
         <div class="timer" id="timerContainer">
             IMPACT IN: <span id="countdown">--</span>
         </div>
 
-        <!-- District Selector -->
-        <div class="section">
+        <!-- District Selector / Zone Status -->
+        <div class="section" id="districtSection">
             <div class="section-title">
-                <span>📍 Select District</span>
-                <span style="font-size: 9px; color: #64748b;" id="selectedDistrictStatus">None</span>
+                <span>📍 Almaty Zone Selector</span>
+                <span style="font-size: 9px; color: #64748b;" id="selectedDistrictStatus">Detecting...</span>
             </div>
-            <div class="district-grid">
+            <div class="district-grid" id="districtGrid">
                 <button class="district-btn" onclick="selectDistrict('Бостандыкский')">Бостандык <span class="district-count" id="count-bost">12</span></button>
                 <button class="district-btn" onclick="selectDistrict('Медеуский')">Медеу <span class="district-count" id="count-med">9</span></button>
                 <button class="district-btn" onclick="selectDistrict('Алмалинский')">Алмалы <span class="district-count" id="count-alm">14</span></button>
@@ -333,31 +294,42 @@
 
         let districtCounts = { 'Бостандыкский': 12, 'Медеуский': 9, 'Алмалинский': 14, 'Ауэзовский': 8 };
 
-        const pulseLogs = [
-            "USGS telemetry stable",
-            "Tien Shan baseline normal",
-            "Mesh nodes synchronized",
-            "Matrix vectors active"
-        ];
-
         window.addEventListener('DOMContentLoaded', () => {
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
             }
-            
-            fetch('https://api.countapi.xyz/hit/q-seismic-almaty/visits')
-                .then(res => res.json())
-                .then(data => { document.getElementById('userCount').innerText = data.value; })
-                .catch(() => { document.getElementById('userCount').innerText = "42"; });
+
+            // Проверяем геолокацию пользователя, чтобы понять, в Алматы он или нет
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        // Если пользователь далеко от Алматы (больше ~100 км), переводим в режим наблюдателя
+                        const distToAlmaty = calculateDistance(ALMATY_LAT, ALMATY_LON, userLat, userLon);
+                        if (distToAlmaty > 100) {
+                            document.getElementById('districtSection').innerHTML = `
+                                <div class="section-title"><span>🌍 External Observer Mode</span></div>
+                                <div style="font-size: 11px; color: #94a3b8; text-align: center; padding: 6px;">
+                                    Вы находитесь вне зоны покрытия Алматы. Сайт работает в режиме глобального мониторинга.
+                                </div>
+                            `;
+                        } else {
+                            document.getElementById('selectedDistrictStatus').innerText = "None selected";
+                        }
+                    },
+                    () => {
+                        // Если пользователь запретил геолокацию, просто оставляем выбор районов для удобства
+                        document.getElementById('selectedDistrictStatus').innerText = "None selected";
+                    },
+                    { timeout: 5000 }
+                );
+            } else {
+                document.getElementById('selectedDistrictStatus').innerText = "None selected";
+            }
 
             checkDirectAPI();
             setInterval(checkDirectAPI, 15000);
-
-            let logIndex = 0;
-            setInterval(() => {
-                logIndex = (logIndex + 1) % pulseLogs.length;
-                document.getElementById('pulseTicker').innerText = pulseLogs[logIndex];
-            }, 4000);
         });
 
         function selectDistrict(name) {
@@ -440,6 +412,5 @@
     </script>
 </body>
 </html>
-
 
 
