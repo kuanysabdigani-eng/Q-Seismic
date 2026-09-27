@@ -272,10 +272,10 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
-        <!-- Кнопка подключения Telegram-бота -->
-        <div class="section" style="text-align: center; padding: 10px;">
-            <a href="https://t.me/Seismic1_BOT?start=subscribe" target="_blank" style="display: block; background: #0284c7; color: #fff; padding: 10px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; transition: background 0.2s;">
-                🔔 Подключить Telegram-алерты
+        <!-- Кнопка перехода к боту -->
+        <div class="section" style="text-align: center; padding: 8px;">
+            <a href="https://t.me/Seismic1_BOT?start=subscribe" target="_blank" style="display: block; background: #0284c7; color: #fff; padding: 8px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold;">
+                🔔 Открыть Telegram-бота
             </a>
         </div>
 
@@ -341,7 +341,7 @@
         const ALMATY_LAT = 43.2389;
         const ALMATY_LON = 76.8897;
 
-        let isEmergencyActive = false; // Флаг для блокировки статусных пушей при тревоге
+        let isEmergencyActive = false; 
 
         let districtCounts = { 
             'Бостандыкский': 4, 
@@ -401,16 +401,7 @@
 
             if ("Notification" in window && Notification.permission === "granted") {
                 const hour = new Date().getHours();
-                let period = '';
-                
-                if (hour >= 6 && hour < 12) {
-                    period = 'morning';
-                } else if (hour >= 12 && hour < 18) {
-                    period = 'afternoon';
-                } else {
-                    period = 'evening';
-                }
-
+                let period = hour < 12 ? 'morning' : (hour < 18 ? 'afternoon' : 'evening');
                 const today = new Date().toDateString();
                 const lastPushKey = `q_push_${today}_${period}`;
 
@@ -476,6 +467,16 @@
                 new Notification("⚠️ Q-SEISMIC WARNING", { body: `Mag: ${magnitude} | Dist: ${distance.toFixed(1)} km` });
             }
 
+            // JavaScript отправка в Telegram прямо из браузера при тревоге:
+            fetch(`https://api.telegram.org/bot8793567975:AAFP53AmIn7E2rGP53ZXnNg2DDNryrw1r7Y/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: 'ТВОЙ_CHAT_ID', // замени на свой ID, если хочешь получать алерты в чат
+                    text: `⚠️ ТРЕВОГА! Магнитуда: ${magnitude} | Эпицентр: ${place} | Дистанция: ${distance.toFixed(1)} км`
+                })
+            }).catch(err => console.log('ТГ отправка не удалась:', err));
+
             document.getElementById('timerContainer').style.display = 'block';
             document.getElementById('countdown').innerText = isInstant ? "INSTANT!" : Math.round(distance / 4) + "s";
         }
@@ -519,5 +520,6 @@
     </script>
 </body>
 </html>
+
 
 
