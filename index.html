@@ -88,7 +88,7 @@
             font-size: 20px;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             padding: 12px;
             border-radius: 10px;
             background: #10b981;
@@ -96,6 +96,28 @@
             box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
             letter-spacing: 1px;
             transition: background 0.3s;
+        }
+
+        /* Telegram Channel Link Button */
+        .tg-channel-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .tg-channel-btn:hover {
+            background: rgba(14, 165, 233, 0.3);
+            color: #fff;
         }
 
         /* Test Push Button */
@@ -299,6 +321,11 @@
         </div>
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
+
+        <!-- Кнопка перехода в Telegram-канал жителей -->
+        <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="tg-channel-btn">
+            📢 ПЕРЕЙТИ В ТГ-КАНАЛ ЖИТЕЛЕЙ
+        </a>
 
         <!-- Кнопка проверки пуш-уведомлений в браузере -->
         <button class="push-test-btn" onclick="testBrowserPush()">🧪 Проверить пуш-уведомление</button>
