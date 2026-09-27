@@ -135,6 +135,48 @@
             align-items: center;
         }
 
+        /* Telegram Setup Block */
+        .tg-input-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .tg-input {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            outline: none;
+        }
+        .tg-input:focus {
+            border-color: #38bdf8;
+        }
+        .tg-btn {
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tg-btn:hover {
+            background: #0369a1;
+        }
+        .tg-test-btn {
+            background: #10b981;
+            width: 100%;
+            margin-top: 6px;
+        }
+        .tg-test-btn:hover {
+            background: #059669;
+        }
+
         /* District Grid (8 districts) */
         .district-grid {
             display: grid;
@@ -272,11 +314,18 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
-        <!-- Кнопка перехода к боту -->
-        <div class="section" style="text-align: center; padding: 8px;">
-            <a href="https://t.me/Seismic1_BOT?start=subscribe" target="_blank" style="display: block; background: #0284c7; color: #fff; padding: 8px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold;">
-                🔔 Открыть Telegram-бота
-            </a>
+        <!-- Блок настройки Telegram-уведомлений -->
+        <div class="section">
+            <div class="section-title">
+                <span>🤖 Telegram Alerts Setup</span>
+                <a href="https://t.me/Seismic1_BOT?start=subscribe" target="_blank" style="color: #38bdf8; text-decoration: none; font-size: 9px;">Открыть бота ↗</a>
+            </div>
+            <div style="font-size: 10px; color: #94a3b8; margin-bottom: 6px;">Введите ваш Telegram Chat ID для получения алертов:</div>
+            <div class="tg-input-group">
+                <input type="text" id="chatIdInput" class="tg-input" placeholder="Например: 123456789">
+                <button class="tg-btn" onclick="saveChatId()">Сохранить</button>
+            </div>
+            <button class="tg-btn tg-test-btn" onclick="sendTestAlert()">🧪 Отправить тестовый алерт</button>
         </div>
 
         <!-- Total Visitors HUD -->
@@ -355,6 +404,12 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Загружаем сохраненный chat_id, если он уже вводился
+            const savedChatId = localStorage.getItem('q_seismic_chat_id');
+            if (savedChatId) {
+                document.getElementById('chatIdInput').value = savedChatId;
+            }
+
             let visits = localStorage.getItem('q_seismic_visits');
             if (!visits) {
                 visits = 20;
@@ -373,28 +428,50 @@
             }
 
             checkTriDailyStatusPush();
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const distToAlmaty = calculateDistance(ALMATY_LAT, ALMATY_LON, position.coords.latitude, position.coords.longitude);
-                        if (distToAlmaty > 100) {
-                            document.getElementById('districtSection').innerHTML = `
-                                <div class="section-title"><span>🌍 External Observer Mode</span></div>
-                                <div style="font-size: 11px; color: #94a3b8; text-align: center; padding: 6px;">
-                                    Вне зоны Алматы. Режим глобального мониторинга.
-                                </div>
-                            `;
-                        }
-                    },
-                    () => {},
-                    { timeout: 5000 }
-                );
-            }
-
             checkDirectAPI();
             setInterval(checkDirectAPI, 15000);
         });
+
+        function saveChatId() {
+            const chatId = document.getElementById('chatIdInput').value.trim();
+            if (!chatId) {
+                alert('Введите корректный Chat ID!');
+                return;
+            }
+            localStorage.setItem('q_seismic_chat_id', chatId);
+            alert('Chat ID успешно сохранен в браузере!');
+        }
+
+        function sendTestAlert() {
+            const chatId = document.getElementById('chatIdInput').value.trim();
+            if (!chatId) {
+                alert('Сначала введите и сохраните свой Chat ID!');
+                return;
+            }
+
+            const testMessage = "🧪 ТЕСТОВЫЙ АЛЕРТ Q-SEISMIC!\nМагнитуда: 4.5\nЭпицентр: Тянь-Шань (Тест)\nДистанция: 15.0 км";
+
+            fetch(`https://api.telegram.org/bot8793567975:AAFP53AmIn7E2rGP53ZXnNg2DDNryrw1r7Y/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: testMessage
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    alert('Тестовое уведомление успешно отправлено в ваш Telegram!');
+                } else {
+                    alert('Ошибка отправки: убедитесь, что вы нажали /start у бота @Seismic1_BOT');
+                }
+            })
+            .catch(err => {
+                alert('Ошибка сети при отправке.');
+                console.log(err);
+            });
+        }
 
         function checkTriDailyStatusPush() {
             if (isEmergencyActive) return;
@@ -423,20 +500,6 @@
             btnElement.classList.add('active');
             districtCounts[name]++;
             document.getElementById('selectedDistrictStatus').innerText = name;
-            
-            const mapKeys = {
-                'Бостандыкский': 'count-bost',
-                'Медеуский': 'count-med',
-                'Алмалинский': 'count-alm',
-                'Ауэзовский': 'count-auz',
-                'Наурызбайский': 'count-naur',
-                'Алатауский': 'count-alat',
-                'Жетысуский': 'count-zhet',
-                'Турксибский': 'count-turk'
-            };
-            if(mapKeys[name]) {
-                document.getElementById(mapKeys[name]).innerText = districtCounts[name];
-            }
         }
 
         function answerSurvival(isCorrect) {
@@ -462,20 +525,24 @@
             isEmergencyActive = true; 
             document.body.classList.add('alarm-active');
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
+
+            const detailMessage = `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.toFixed(1)}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км`;
             
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("⚠️ Q-SEISMIC WARNING", { body: `Mag: ${magnitude} | Dist: ${distance.toFixed(1)} km` });
+                new Notification("⚠️ Q-SEISMIC WARNING", { body: detailMessage });
             }
 
-            // JavaScript отправка в Telegram прямо из браузера при тревоге:
-            fetch(`https://api.telegram.org/bot8793567975:AAFP53AmIn7E2rGP53ZXnNg2DDNryrw1r7Y/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: 'ТВОЙ_CHAT_ID', // замени на свой ID, если хочешь получать алерты в чат
-                    text: `⚠️ ТРЕВОГА! Магнитуда: ${magnitude} | Эпицентр: ${place} | Дистанция: ${distance.toFixed(1)} км`
-                })
-            }).catch(err => console.log('ТГ отправка не удалась:', err));
+            const chatId = localStorage.getItem('q_seismic_chat_id');
+            if (chatId) {
+                fetch(`https://api.telegram.org/bot8793567975:AAFP53AmIn7E2rGP53ZXnNg2DDNryrw1r7Y/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatId, 
+                        text: detailMessage
+                    })
+                }).catch(err => console.log('Ошибка отправки в ТГ:', err));
+            }
 
             document.getElementById('timerContainer').style.display = 'block';
             document.getElementById('countdown').innerText = isInstant ? "INSTANT!" : Math.round(distance / 4) + "s";
@@ -520,6 +587,7 @@
     </script>
 </body>
 </html>
+
 
 
 
