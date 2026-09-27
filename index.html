@@ -272,6 +272,13 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
+        <!-- Кнопка подключения Telegram-бота -->
+        <div class="section" style="text-align: center; padding: 10px;">
+            <a href="https://t.me/Seismic1_BOT?start=subscribe" target="_blank" style="display: block; background: #0284c7; color: #fff; padding: 10px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; transition: background 0.2s;">
+                🔔 Подключить Telegram-алерты
+            </a>
+        </div>
+
         <!-- Total Visitors HUD -->
         <div class="hud-stats">
             <div class="hud-card">
@@ -348,7 +355,6 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Подсчет посетителей, начиная с 20
             let visits = localStorage.getItem('q_seismic_visits');
             if (!visits) {
                 visits = 20;
@@ -366,7 +372,6 @@
                 Notification.requestPermission();
             }
 
-            // Проверка пуша 3 раза в день (утро, обед, вечер) с защитой от отправки при тревоге
             checkTriDailyStatusPush();
 
             if (navigator.geolocation) {
@@ -392,7 +397,6 @@
         });
 
         function checkTriDailyStatusPush() {
-            // Если зафиксирована тревога, дружелюбный пуш полностью блокируется
             if (isEmergencyActive) return;
 
             if ("Notification" in window && Notification.permission === "granted") {
@@ -412,7 +416,6 @@
 
                 if (!localStorage.getItem(lastPushKey)) {
                     setTimeout(() => {
-                        // Дополнительная проверка перед самым отправлением
                         if (!isEmergencyActive) {
                             new Notification("Q-Seismic Almaty", { 
                                 body: "Тянь-Шань в норме, обстановка стабильная. Все контуры под контролем." 
@@ -465,12 +468,14 @@
         }
 
         function handleAlarmState(distance, magnitude, place, layerName, isInstant) {
-            isEmergencyActive = true; // Активируем флаг тревоги, блокирующий спокойные статусы
+            isEmergencyActive = true; 
             document.body.classList.add('alarm-active');
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
+            
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⚠️ Q-SEISMIC WARNING", { body: `Mag: ${magnitude} | Dist: ${distance.toFixed(1)} km` });
             }
+
             document.getElementById('timerContainer').style.display = 'block';
             document.getElementById('countdown').innerText = isInstant ? "INSTANT!" : Math.round(distance / 4) + "s";
         }
