@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q-Seismic Almaty — Early Warning System</title>
     
-    <!-- Ссылка на манифест для добавления на главный экран -->
+    <!-- Link to manifest for home screen installation -->
     <link rel="manifest" href="/manifest.json">
 
-    <!-- Мета-теги для полноэкранного PWA-режима -->
+    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -400,13 +400,13 @@
 </head>
 <body>
 
-    <!-- Всплывающее окно (Модалка) -->
+    <!-- Modal Popup -->
     <div class="modal-overlay" id="tgModal">
         <div class="modal-box">
-            <div class="modal-title" id="modalTitle">🚨 Сейсмо-мониторинг Алматы</div>
-            <div class="modal-text" id="modalText">Официальные датчики запаздывают. Жители пишут реальную обстановку в нашем Telegram-чате раньше всех. Присоединяйся!</div>
-            <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="modal-btn" onclick="closeModal()">💬 ВОЙТИ В СЕЙСМО-ЧАТ</a>
-            <button class="modal-close" onclick="handleSecondModal()">Продолжить просмотр сайта</button>
+            <div class="modal-title" id="modalTitle">🚨 Live Seismic Chat</div>
+            <div class="modal-text" id="modalText">Official sensors can be delayed. Locals report real-time conditions in our Telegram community before anyone else. Join us to stay safe!</div>
+            <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="modal-btn" onclick="closeModal()">💬 JOIN TELEGRAM CHAT</a>
+            <button class="modal-close" onclick="handleSecondModal()">Continue to website</button>
         </div>
     </div>
 
@@ -423,13 +423,13 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
-        <!-- Кнопка перехода в Telegram-канал жителей -->
+        <!-- Telegram Channel Link Button -->
         <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="tg-channel-btn">
-            ⚡ ПОДКЛЮЧИТЬСЯ К СЕЙСМО-ЧАТУ: Узнай мониторинг от людей
+            ⚡ JOIN LIVE CHAT: Get real-time updates from locals
         </a>
 
-        <!-- Кнопка проверки пуш-уведомлений в браузере -->
-        <button class="push-test-btn" onclick="testBrowserPush()">🧪 Проверить пуш-уведомление</button>
+        <!-- Test Push Notification Button -->
+        <button class="push-test-btn" onclick="testBrowserPush()">🧪 Test Push Notifications</button>
 
         <!-- Total Visitors HUD -->
         <div class="hud-stats">
@@ -450,14 +450,14 @@
                 <span style="font-size: 9px; color: #64748b;" id="selectedDistrictStatus">None selected</span>
             </div>
             <div class="district-grid" id="districtGrid">
-                <button class="district-btn" onclick="selectDistrict('Бостандыкский', this)">Бостандык <span class="district-count" id="count-bost">4</span></button>
-                <button class="district-btn" onclick="selectDistrict('Медеуский', this)">Медеу <span class="district-count" id="count-med">3</span></button>
-                <button class="district-btn" onclick="selectDistrict('Алмалинский', this)">Алмалы <span class="district-count" id="count-alm">5</span></button>
-                <button class="district-btn" onclick="selectDistrict('Ауэзовский', this)">Ауэзов <span class="district-count" id="count-auz">3</span></button>
-                <button class="district-btn" onclick="selectDistrict('Наурызбайский', this)">Наурызбай <span class="district-count" id="count-naur">1</span></button>
-                <button class="district-btn" onclick="selectDistrict('Алатауский', this)">Алатау <span class="district-count" id="count-alat">2</span></button>
-                <button class="district-btn" onclick="selectDistrict('Жетысуский', this)">Жетысу <span class="district-count" id="count-zhet">1</span></button>
-                <button class="district-btn" onclick="selectDistrict('Турксибский', this)">Турксиб <span class="district-count" id="count-turk">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Bostandyq', this)">Bostandyq <span class="district-count" id="count-bost">4</span></button>
+                <button class="district-btn" onclick="selectDistrict('Medeu', this)">Medeu <span class="district-count" id="count-med">3</span></button>
+                <button class="district-btn" onclick="selectDistrict('Almaly', this)">Almaly <span class="district-count" id="count-alm">5</span></button>
+                <button class="district-btn" onclick="selectDistrict('Auezov', this)">Auezov <span class="district-count" id="count-auz">3</span></button>
+                <button class="district-btn" onclick="selectDistrict('Nauryzbay', this)">Nauryzbay <span class="district-count" id="count-naur">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Alatau', this)">Alatau <span class="district-count" id="count-alat">2</span></button>
+                <button class="district-btn" onclick="selectDistrict('Zhetysu', this)">Zhetysu <span class="district-count" id="count-zhet">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Turksib', this)">Turksib <span class="district-count" id="count-turk">1</span></button>
             </div>
         </div>
 
@@ -467,10 +467,10 @@
                 <span>⚡ Protocol: 8-Point Quake</span>
             </div>
             <div class="survival-box" id="survivalBoxContent">
-                <div class="survival-question">Толчок 8 баллов на 9 этаже. Твои действия?</div>
+                <div class="survival-question">8-magnitude quake, 9th floor. Your action?</div>
                 <div class="survival-options">
-                    <button class="opt-btn" onclick="answerSurvival(false)">Бежать к лифту вниз</button>
-                    <button class="opt-btn" onclick="answerSurvival(true)">К капитальной стене / балке</button>
+                    <button class="opt-btn" onclick="answerSurvival(false)">Run to the elevator</button>
+                    <button class="opt-btn" onclick="answerSurvival(true)">Hide near a load-bearing wall</button>
                 </div>
             </div>
         </div>
@@ -484,10 +484,10 @@
             </div>
         </div>
 
-        <!-- Блок призыва к продвижению (мир / алматы) -->
+        <!-- Global Scale Promo Box -->
         <div class="promo-box">
-            🌍 <b>Проект масштабируется на весь мир!</b><br>
-            Пожалуйста, расскажите о сайте друзьям, скиньте ссылку в чаты или снимите видео. Нам важна каждая поддержка!
+            🌍 <b>We are scaling globally!</b><br>
+            Please share this site with friends, drop the link in chats, or make a video. Every bit of support counts!
         </div>
 
         <div class="disclaimer">
@@ -496,7 +496,7 @@
     </div>
 
     <script>
-        // Регистрация Service Worker для поддержки PWA
+        // Register Service Worker for PWA support
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
@@ -512,14 +512,14 @@
         let modalStep = 1;
 
         let districtCounts = { 
-            'Бостандыкский': 4, 
-            'Медеуский': 3, 
-            'Алмалинский': 5, 
-            'Ауэзовский': 3,
-            'Наурызбайский': 1,
-            'Алатауский': 2,
-            'Жетысуский': 1,
-            'Турксибский': 1
+            'Bostandyq': 4, 
+            'Medeu': 3, 
+            'Almaly': 5, 
+            'Auezov': 3,
+            'Nauryzbay': 1,
+            'Alatau': 2,
+            'Zhetysu': 1,
+            'Turksib': 1
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -558,8 +558,8 @@
         function handleSecondModal() {
             if (modalStep === 1) {
                 modalStep = 2;
-                document.getElementById('modalTitle').innerText = "⚠️ Уведомления могут не прийти";
-                document.getElementById('modalText').innerText = "У браузера нет встроенной сирены. Вся реальная обстановка, отчеты жителей и предупреждения о толчках публикуются только в Telegram-чате. Перейди, чтобы быть в безопасности!";
+                document.getElementById('modalTitle').innerText = "⚠️ Notifications may fail";
+                document.getElementById('modalText').innerText = "Browsers don't have built-in sirens. All real-time danger alerts and local reports are posted in our Telegram chat. Join to stay safe!";
             } else {
                 document.getElementById('tgModal').classList.remove('active');
             }
@@ -567,22 +567,22 @@
 
         function testBrowserPush() {
             if (!("Notification" in window)) {
-                alert("Ваш браузер не поддерживает пуш-уведомления.");
+                alert("Your browser does not support push notifications.");
                 return;
             }
 
             if (Notification.permission === "granted") {
                 new Notification("🧪 Q-SEISMIC TEST", { 
-                    body: "Система оповещения в браузере работает исправно!" 
+                    body: "Browser alert system is working correctly!" 
                 });
             } else {
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
                         new Notification("🧪 Q-SEISMIC TEST", { 
-                            body: "Разрешение получено! Уведомления активны." 
+                            body: "Permission granted! Alerts are active." 
                         });
                     } else {
-                        alert("Разрешение на уведомления заблокировано в настройках браузера.");
+                        alert("Notification permission is blocked in your browser settings.");
                     }
                 });
             }
@@ -598,9 +598,9 @@
         function answerSurvival(isCorrect) {
             const box = document.getElementById('survivalBoxContent');
             if (isCorrect) {
-                box.innerHTML = `<div style="color: #34d399; font-weight: bold; text-align: center; padding: 6px;">✅ ВЫЖИЛ! Правильное укрытие. Лифт при землетрясении — смертельная ловушка.</div>`;
+                box.innerHTML = `<div style="color: #34d399; font-weight: bold; text-align: center; padding: 6px;">✅ SURVIVED! Elevators are a death trap during quakes.</div>`;
             } else {
-                box.innerHTML = `<div style="color: #f87171; font-weight: bold; text-align: center; padding: 6px;">❌ ОШИБКА! На высотном этаже это привело бы к критической травме.</div>`;
+                box.innerHTML = `<div style="color: #f87171; font-weight: bold; text-align: center; padding: 6px;">❌ FATAL MISTAKE! Running on high floors leads to critical injury.</div>`;
             }
         }
 
@@ -620,7 +620,7 @@
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
 
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("⚠️ Q-SEISMIC WARNING", { body: `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.toFixed(1)}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км` });
+                new Notification("⚠️ Q-SEISMIC WARNING", { body: `⚠️ ALERT!\nMagnitude: ${magnitude.toFixed(1)}\nEpicenter: ${place}\nDistance: ${distance.toFixed(1)} km` });
             }
 
             document.getElementById('timerContainer').style.display = 'block';
