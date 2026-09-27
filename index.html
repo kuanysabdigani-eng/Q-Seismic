@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q-Seismic Almaty — Early Warning System</title>
+    <!-- Мета-теги для полноэкранного PWA-режима при добавлении на главный экран -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b0f19">
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
@@ -27,7 +33,7 @@
             border: 1px solid rgba(56, 189, 248, 0.15);
             backdrop-filter: blur(12px);
         }
-        
+
         /* Header */
         .header {
             text-align: center;
@@ -88,6 +94,24 @@
             transition: background 0.3s;
         }
 
+        /* Test Push Button */
+        .push-test-btn {
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 9px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+        .push-test-btn:hover {
+            background: #0369a1;
+        }
+
         /* HUD Stats Bar (Visitor Counter) */
         .hud-stats {
             display: grid;
@@ -133,48 +157,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        /* Telegram Setup Block */
-        .tg-input-group {
-            display: flex;
-            gap: 6px;
-            margin-top: 6px;
-        }
-        .tg-input {
-            flex: 1;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 7px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            outline: none;
-        }
-        .tg-input:focus {
-            border-color: #38bdf8;
-        }
-        .tg-btn {
-            background: #0284c7;
-            color: #fff;
-            border: none;
-            padding: 7px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .tg-btn:hover {
-            background: #0369a1;
-        }
-        .tg-test-btn {
-            background: #10b981;
-            width: 100%;
-            margin-top: 6px;
-        }
-        .tg-test-btn:hover {
-            background: #059669;
         }
 
         /* District Grid (8 districts) */
@@ -314,19 +296,8 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
-        <!-- Блок настройки Telegram-уведомлений -->
-        <div class="section">
-            <div class="section-title">
-                <span>🤖 Telegram Alerts Setup</span>
-                <a href="https://t.me/Seismic1_BOT?start=subscribe" target="_blank" style="color: #38bdf8; text-decoration: none; font-size: 9px;">Открыть бота ↗</a>
-            </div>
-            <div style="font-size: 10px; color: #94a3b8; margin-bottom: 6px;">Введите ваш Telegram Chat ID для получения алертов:</div>
-            <div class="tg-input-group">
-                <input type="text" id="chatIdInput" class="tg-input" placeholder="Например: 123456789">
-                <button class="tg-btn" onclick="saveChatId()">Сохранить</button>
-            </div>
-            <button class="tg-btn tg-test-btn" onclick="sendTestAlert()">🧪 Отправить тестовый алерт</button>
-        </div>
+        <!-- Кнопка проверки пуш-уведомлений в браузере -->
+        <button class="push-test-btn" onclick="testBrowserPush()">🧪 Проверить пуш-уведомление</button>
 
         <!-- Total Visitors HUD -->
         <div class="hud-stats">
@@ -382,7 +353,7 @@
         </div>
 
         <div class="disclaimer">
-            Open USGS API & Community Mesh. Info only.
+            Open USGS API & Browser Mesh. Info only.
         </div>
     </div>
 
@@ -404,12 +375,6 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Загружаем сохраненный chat_id, если он уже вводился
-            const savedChatId = localStorage.getItem('q_seismic_chat_id');
-            if (savedChatId) {
-                document.getElementById('chatIdInput').value = savedChatId;
-            }
-
             let visits = localStorage.getItem('q_seismic_visits');
             if (!visits) {
                 visits = 20;
@@ -427,71 +392,30 @@
                 Notification.requestPermission();
             }
 
-            checkTriDailyStatusPush();
             checkDirectAPI();
             setInterval(checkDirectAPI, 15000);
         });
 
-        function saveChatId() {
-            const chatId = document.getElementById('chatIdInput').value.trim();
-            if (!chatId) {
-                alert('Введите корректный Chat ID!');
-                return;
-            }
-            localStorage.setItem('q_seismic_chat_id', chatId);
-            alert('Chat ID успешно сохранен в браузере!');
-        }
-
-        function sendTestAlert() {
-            const chatId = document.getElementById('chatIdInput').value.trim();
-            if (!chatId) {
-                alert('Сначала введите и сохраните свой Chat ID!');
+        function testBrowserPush() {
+            if (!("Notification" in window)) {
+                alert("Ваш браузер не поддерживает пуш-уведомления.");
                 return;
             }
 
-            const testMessage = "🧪 ТЕСТОВЫЙ АЛЕРТ Q-SEISMIC!\nМагнитуда: 4.5\nЭпицентр: Тянь-Шань (Тест)\nДистанция: 15.0 км";
-
-            fetch(`https://api.telegram.org/bot8793567975:AAFP53AmIn7E2rGP53ZXnNg2DDNryrw1r7Y/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: testMessage
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.ok) {
-                    alert('Тестовое уведомление успешно отправлено в ваш Telegram!');
-                } else {
-                    alert('Ошибка отправки: убедитесь, что вы нажали /start у бота @Seismic1_BOT');
-                }
-            })
-            .catch(err => {
-                alert('Ошибка сети при отправке.');
-                console.log(err);
-            });
-        }
-
-        function checkTriDailyStatusPush() {
-            if (isEmergencyActive) return;
-
-            if ("Notification" in window && Notification.permission === "granted") {
-                const hour = new Date().getHours();
-                let period = hour < 12 ? 'morning' : (hour < 18 ? 'afternoon' : 'evening');
-                const today = new Date().toDateString();
-                const lastPushKey = `q_push_${today}_${period}`;
-
-                if (!localStorage.getItem(lastPushKey)) {
-                    setTimeout(() => {
-                        if (!isEmergencyActive) {
-                            new Notification("Q-Seismic Almaty", { 
-                                body: "Тянь-Шань в норме, обстановка стабильная. Все контуры под контролем." 
-                            });
-                            localStorage.setItem(lastPushKey, 'true');
-                        }
-                    }, 3000);
-                }
+            if (Notification.permission === "granted") {
+                new Notification("🧪 Q-SEISMIC TEST", { 
+                    body: "Система оповещения в браузере работает исправно!" 
+                });
+            } else {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("🧪 Q-SEISMIC TEST", { 
+                            body: "Разрешение получено! Уведомления активны." 
+                        });
+                    } else {
+                        alert("Разрешение на уведомления заблокировано в настройках браузера.");
+                    }
+                });
             }
         }
 
@@ -521,27 +445,15 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function handleAlarmState(distance, magnitude, place, layerName, isInstant) {
+        function handleAlarmState(distance, magnitude, place, isInstant) {
             isEmergencyActive = true; 
             document.body.classList.add('alarm-active');
             document.getElementById('statusBox').innerText = `⚠️ WARNING!`;
 
             const detailMessage = `⚠️ ТРЕВОГА!\nМагнитуда: ${magnitude.toFixed(1)}\nЭпицентр: ${place}\nДистанция: ${distance.toFixed(1)} км`;
-            
+
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("⚠️ Q-SEISMIC WARNING", { body: detailMessage });
-            }
-
-            const chatId = localStorage.getItem('q_seismic_chat_id');
-            if (chatId) {
-                fetch(`https://api.telegram.org/bot8793567975:AAFP53AmIn7E2rGP53ZXnNg2DDNryrw1r7Y/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId, 
-                        text: detailMessage
-                    })
-                }).catch(err => console.log('Ошибка отправки в ТГ:', err));
             }
 
             document.getElementById('timerContainer').style.display = 'block';
@@ -572,7 +484,7 @@
 
                         if (dist <= 300 && mag >= 3.5 && !alarmTriggered) {
                             alarmTriggered = true;
-                            handleAlarmState(dist, mag, place, "Zone", dist <= 30);
+                            handleAlarmState(dist, mag, place, dist <= 30);
                         }
                     }
                     if (foundEvents === 0) feedHTML += `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 6px;">No seismic activity within 500 km.</div>`;
@@ -587,6 +499,7 @@
     </script>
 </body>
 </html>
+
 
 
 
