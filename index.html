@@ -288,6 +288,23 @@
             border-left: 2px solid #38bdf8;
             font-size: 11px;
         }
+
+        /* Promo Callout Box */
+        .promo-box {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px dashed rgba(56, 189, 248, 0.4);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 11px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+        .promo-box b {
+            color: #38bdf8;
+        }
+
         .disclaimer {
             font-size: 9px;
             color: #475569;
@@ -437,7 +454,7 @@
                 <button class="district-btn" onclick="selectDistrict('Медеуский', this)">Медеу <span class="district-count" id="count-med">3</span></button>
                 <button class="district-btn" onclick="selectDistrict('Алмалинский', this)">Алмалы <span class="district-count" id="count-alm">5</span></button>
                 <button class="district-btn" onclick="selectDistrict('Ауэзовский', this)">Ауэзов <span class="district-count" id="count-auz">3</span></button>
-                <button class="district-btn" onclick="selectDistrict('Наурызбайский', this, 'Наурызбай <span class="district-count" id="count-naur">1</span>')">Наурызбай <span class="district-count" id="count-naur">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Наурызбайский', this)">Наурызбай <span class="district-count" id="count-naur">1</span></button>
                 <button class="district-btn" onclick="selectDistrict('Алатауский', this)">Алатау <span class="district-count" id="count-alat">2</span></button>
                 <button class="district-btn" onclick="selectDistrict('Жетысуский', this)">Жетысу <span class="district-count" id="count-zhet">1</span></button>
                 <button class="district-btn" onclick="selectDistrict('Турксибский', this)">Турксиб <span class="district-count" id="count-turk">1</span></button>
@@ -467,6 +484,12 @@
             </div>
         </div>
 
+        <!-- Блок призыва к продвижению (мир / алматы) -->
+        <div class="promo-box">
+            🌍 <b>Проект масштабируется на весь мир!</b><br>
+            Пожалуйста, расскажите о сайте друзьям, скиньте ссылку в чаты или снимите видео. Нам важна каждая поддержка!
+        </div>
+
         <div class="disclaimer">
             Open USGS API & Browser Mesh. Info only.
         </div>
@@ -486,7 +509,7 @@
         const ALMATY_LON = 76.8897;
 
         let isEmergencyActive = false; 
-        let modalStep = 1; // 1 - первое окно, 2 - второе повторное окно
+        let modalStep = 1;
 
         let districtCounts = { 
             'Бостандыкский': 4, 
@@ -517,7 +540,6 @@
                 Notification.requestPermission();
             }
 
-            // Показываем первое всплывающее окно через 4 секунды
             setTimeout(() => {
                 if (!sessionStorage.getItem('modalShown')) {
                     document.getElementById('tgModal').classList.add('active');
@@ -533,11 +555,9 @@
             document.getElementById('tgModal').classList.remove('active');
         }
 
-        // Логика второго окна при закрытии первого
         function handleSecondModal() {
             if (modalStep === 1) {
                 modalStep = 2;
-                // Меняем текст на второй, более убедительный призыв
                 document.getElementById('modalTitle').innerText = "⚠️ Уведомления могут не прийти";
                 document.getElementById('modalText').innerText = "У браузера нет встроенной сирены. Вся реальная обстановка, отчеты жителей и предупреждения о толчках публикуются только в Telegram-чате. Перейди, чтобы быть в безопасности!";
             } else {
@@ -646,7 +666,6 @@
     </script>
 </body>
 </html>
-
 
 
 
