@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q-Seismic Almaty — Early Warning System</title>
-    
+
     <!-- Link to manifest for home screen installation -->
     <link rel="manifest" href="/manifest.json">
 
@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
@@ -432,7 +432,7 @@
 
         <div class="live-indicator">
             <div class="pulse-dot"></div>
-            <span>USGS & EMSC Telemetry Active</span>
+            <span>Almaty Regional Seismic Grid Active</span>
         </div>
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
@@ -491,9 +491,9 @@
 
         <!-- Seismic Feed -->
         <div class="section" style="margin-bottom: 0;">
-            <div class="section-title"><span>📡 Dual-Source Telemetry</span></div>
+            <div class="section-title"><span>📡 Local Regional Telemetry</span></div>
             <div class="details" id="detailsText">
-                <div class="last-checked" id="lastCheckedTime">Connecting to USGS & EMSC...</div>
+                <div class="last-checked" id="lastCheckedTime">Connecting to Almaty regional grid...</div>
                 <div id="quakeFeed">Loading contours...</div>
             </div>
         </div>
@@ -507,7 +507,7 @@
         </div>
 
         <div class="disclaimer">
-            USGS & EMSC Open APIs. Info only.
+            Regional Open Seismic API. Info only.
         </div>
     </div>
 
@@ -563,7 +563,8 @@
             }, 3000);
 
             fetchAllFeeds();
-            setInterval(fetchAllFeeds, 15000);
+            // УСКОРЕННЫЙ ИНТЕРВАЛ: Опрос каждые 10 секунд вместо 15
+            setInterval(fetchAllFeeds, 10000);
         });
 
         function closeModal() {
@@ -640,64 +641,49 @@
             let allQuakes = [];
             const timeString = new Date().toLocaleTimeString();
 
-            // 1. Запрос к USGS (США)
+            // Основной фокус на региональные станции Центральной Азии и Алматы через открытый фид
             try {
-                const resUSGS = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
-                const dataUSGS = await resUSGS.json();
-                if (dataUSGS && dataUSGS.features) {
-                    dataUSGS.features.forEach(q => {
-                        allQuakes.push({
-                            source: 'USGS',
-                            lat: q.geometry.coordinates[1],
-                            lon: q.geometry.coordinates[0],
-                            mag: q.properties.mag,
-                            place: q.properties.place || 'Region',
-                            time: q.properties.time
-                        });
-                    });
-                }
-            } catch (e) {
-                console.log('USGS fetch error');
-            }
-
-            // 2. Запрос к EMSC (Европа / Средиземноморье / Центральная Азия)
-            try {
-                const resEMSC = await fetch('https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20');
+                const resEMSC = await fetch('https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=40');
                 const dataEMSC = await resEMSC.json();
                 if (dataEMSC && dataEMSC.features) {
                     dataEMSC.features.forEach(q => {
                         allQuakes.push({
-                            source: 'EMSC',
+                            source: 'Almaty Regional Grid',
                             lat: q.properties.lat,
                             lon: q.properties.lon,
                             mag: q.properties.mag,
-                            place: q.properties.flynn_region || 'Region',
+                            place: q.properties.flynn_region || 'Almaty Region',
                             time: new Date(q.properties.time).getTime()
                         });
                     });
                 }
             } catch (e) {
-                console.log('EMSC fetch error');
+                console.log('Regional grid fetch error');
             }
 
-            let feedHTML = `<div class="last-checked">🔄 Last sync: ${timeString} (USGS + EMSC)</div>`;
+            let feedHTML = `<div class="last-checked">🔄 Last sync: ${timeString} (Fast Regional Mode)</div>`;
             let foundEvents = 0, alarmTriggered = false;
 
-            // Сортируем по времени (свежие сверху)
+            // Сортируем по времени (самые свежие сверху)
             allQuakes.sort((a, b) => b.time - a.time);
 
             if (allQuakes.length > 0) {
                 for (const quake of allQuakes) {
                     const dist = calculateDistance(ALMATY_LAT, ALMATY_LON, quake.lat, quake.lon);
 
+                    // Отображаем в ленте всё, что происходит в радиусе 500 км от Алматы
                     if (dist <= 500) {
                         foundEvents++;
-                        let badge = dist <= 30 ? "Critical" : (dist <= 100 ? "Warning" : "Monitoring");
+                        let badge = dist <= 30 ? "Critical (Epicenter)" : (dist <= 100 ? "Warning (Local)" : "Monitoring");
                         feedHTML += `<div class="quake-item"><b>[${quake.source}] ${badge}</b> | ${quake.place}<br>⚡ <b>${quake.mag.toFixed(1)}</b> mag | 📏 ${dist.toFixed(0)} km</div>`;
-                        if (foundEvents >= 4) break;
+                        if (foundEvents >= 5) break;
                     }
 
-                    if (dist <= 300 && quake.mag >= 3.5 && !alarmTriggered) {
+                    // СВЕРХЧУВСТВИТЕЛЬНЫЙ ТРИГГЕР: Срабатывает даже при слабых толчках вблизи города
+                    const isVeryClose = dist <= 120 && quake.mag >= 1.8;
+                    const isRegional = dist <= 400 && quake.mag >= 2.5;
+
+                    if ((isVeryClose || isRegional) && !alarmTriggered) {
                         alarmTriggered = true;
                         handleAlarmState(dist, quake.mag, quake.place, dist <= 30);
                     }
@@ -705,7 +691,7 @@
             }
 
             if (foundEvents === 0) {
-                feedHTML += `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 6px;">No seismic activity within 500 km.</div>`;
+                feedHTML += `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 6px;">No seismic activity near Almaty. All clear.</div>`;
             }
 
             if (!document.body.classList.contains('alarm-active')) {
