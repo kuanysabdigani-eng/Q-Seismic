@@ -98,28 +98,32 @@
             transition: background 0.3s;
         }
 
-        /* Telegram Channel Link Button */
-        .tg-channel-btn {
+        /* Urgent Telegram Channel Link Button (Pulsing Red) */
+        .tg-urgent-btn {
             display: block;
             width: 100%;
-            padding: 12px 10px;
+            padding: 14px 16px;
             margin-bottom: 16px;
-            background: rgba(14, 165, 233, 0.2);
-            border: 1px solid rgba(56, 189, 248, 0.6);
-            color: #38bdf8;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: 2px solid #f87171;
+            color: #fff;
             text-align: center;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 11px;
             font-weight: bold;
             letter-spacing: 0.5px;
-            transition: all 0.2s;
-            box-shadow: 0 0 15px rgba(14, 165, 233, 0.15);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+            animation: pulse-alert 2s infinite;
+            line-height: 1.4;
         }
-        .tg-channel-btn:hover {
-            background: rgba(14, 165, 233, 0.4);
-            color: #fff;
-            border-color: #38bdf8;
+        .tg-urgent-btn:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+        @keyframes pulse-alert {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
         /* Test Push Button */
@@ -304,6 +308,16 @@
         .promo-box b {
             color: #38bdf8;
         }
+        .tiktok-link {
+            display: inline-block;
+            margin-top: 6px;
+            color: #38bdf8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .tiktok-link:hover {
+            text-decoration: underline;
+        }
 
         .disclaimer {
             font-size: 9px;
@@ -336,7 +350,7 @@
         }
         .modal-box {
             background: #0f172a;
-            border: 1px solid rgba(56, 189, 248, 0.4);
+            border: 1px solid rgba(239, 68, 68, 0.4);
             border-radius: 16px;
             padding: 24px 20px;
             max-width: 360px;
@@ -361,7 +375,7 @@
             display: block;
             width: 100%;
             padding: 12px;
-            background: #0284c7;
+            background: #ef4444;
             color: #fff;
             text-decoration: none;
             border-radius: 8px;
@@ -371,7 +385,7 @@
             transition: background 0.2s;
         }
         .modal-btn:hover {
-            background: #0369a1;
+            background: #dc2626;
         }
         .modal-close {
             background: transparent;
@@ -403,10 +417,10 @@
     <!-- Modal Popup -->
     <div class="modal-overlay" id="tgModal">
         <div class="modal-box">
-            <div class="modal-title" id="modalTitle">🚨 Live Seismic Chat</div>
-            <div class="modal-text" id="modalText">Official sensors can be delayed. Locals report real-time conditions in our Telegram community before anyone else. Join us to stay safe!</div>
-            <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="modal-btn" onclick="closeModal()">💬 JOIN TELEGRAM CHAT</a>
-            <button class="modal-close" onclick="handleSecondModal()">Continue to website</button>
+            <div class="modal-title" id="modalTitle">⚠️ ВНИМАНИЕ: Пуши могут не сработать</div>
+            <div class="modal-text" id="modalText">Браузеры на телефоне глушат фоновые уведомления. Чтобы гарантированно получать все экстренные предупреждения и вовремя узнавать о толчках от жителей, обязательно вступите в наш Telegram-канал!</div>
+            <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="modal-btn" onclick="closeModal()">💬 ВСТУПИТЬ В ТГ-КАНАЛ ЖИТЕЛЕЙ</a>
+            <button class="modal-close" onclick="handleSecondModal()">Перейти к сайту</button>
         </div>
     </div>
 
@@ -423,9 +437,9 @@
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
 
-        <!-- Telegram Channel Link Button -->
-        <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="tg-channel-btn">
-            ⚡ JOIN LIVE CHAT: Get real-time updates from locals
+        <!-- Яркая пульсирующая кнопка перехода в Telegram -->
+        <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="tg-urgent-btn">
+            🚨 ПУШИ В БРАУЗЕРЕ МОГУТ МОЛЧАТЬ!<br>👉 ВСТУПИТЬ В ТГ-КАНАЛ ЖИТЕЛЕЙ
         </a>
 
         <!-- Test Push Notification Button -->
@@ -484,10 +498,11 @@
             </div>
         </div>
 
-        <!-- Global Scale Promo Box -->
+        <!-- Global Scale & TikTok Promo Box -->
         <div class="promo-box">
             🌍 <b>We are scaling globally!</b><br>
-            Please share this site with friends, drop the link in chats, or make a video. Every bit of support counts!
+            Please share this site, drop the link in chats, or check out my TikTok!<br>
+            <a href="https://www.tiktok.com/@abon" target="_blank" class="tiktok-link">📱 Подписаться на TikTok: @abon</a>
         </div>
 
         <div class="disclaimer">
@@ -545,7 +560,7 @@
                     document.getElementById('tgModal').classList.add('active');
                     sessionStorage.setItem('modalShown', 'true');
                 }
-            }, 4000);
+            }, 3000);
 
             checkDirectAPI();
             setInterval(checkDirectAPI, 15000);
@@ -556,13 +571,7 @@
         }
 
         function handleSecondModal() {
-            if (modalStep === 1) {
-                modalStep = 2;
-                document.getElementById('modalTitle').innerText = "⚠️ Notifications may fail";
-                document.getElementById('modalText').innerText = "Browsers don't have built-in sirens. All real-time danger alerts and local reports are posted in our Telegram chat. Join to stay safe!";
-            } else {
-                document.getElementById('tgModal').classList.remove('active');
-            }
+            document.getElementById('tgModal').classList.remove('active');
         }
 
         function testBrowserPush() {
@@ -666,6 +675,7 @@
     </script>
 </body>
 </html>
+
 
 
 
