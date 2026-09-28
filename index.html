@@ -432,7 +432,7 @@
 
         <div class="live-indicator">
             <div class="pulse-dot"></div>
-            <span>USGS Telemetry Active</span>
+            <span>USGS & EMSC Telemetry Active</span>
         </div>
 
         <div class="status-box" id="statusBox">ALL CLEAR</div>
@@ -491,9 +491,9 @@
 
         <!-- Seismic Feed -->
         <div class="section" style="margin-bottom: 0;">
-            <div class="section-title"><span>📡 3-Layer Telemetry</span></div>
+            <div class="section-title"><span>📡 Dual-Source Telemetry</span></div>
             <div class="details" id="detailsText">
-                <div class="last-checked" id="lastCheckedTime">Connecting to USGS...</div>
+                <div class="last-checked" id="lastCheckedTime">Connecting to USGS & EMSC...</div>
                 <div id="quakeFeed">Loading contours...</div>
             </div>
         </div>
@@ -507,7 +507,7 @@
         </div>
 
         <div class="disclaimer">
-            Open USGS API & Browser Mesh. Info only.
+            USGS & EMSC Open APIs. Info only.
         </div>
     </div>
 
@@ -525,7 +525,6 @@
         const ALMATY_LON = 76.8897;
 
         let isEmergencyActive = false; 
-        let modalStep = 1;
 
         let districtCounts = { 
             'Bostandyq': 4, 
@@ -563,8 +562,8 @@
                 }
             }, 3000);
 
-            checkDirectAPI();
-            setInterval(checkDirectAPI, 15000);
+            fetchAllFeeds();
+            setInterval(fetchAllFeeds, 15000);
         });
 
         function closeModal() {
@@ -637,46 +636,85 @@
             document.getElementById('countdown').innerText = isInstant ? "INSTANT!" : Math.round(distance / 4) + "s";
         }
 
-        async function checkDirectAPI() {
+        async function fetchAllFeeds() {
+            let allQuakes = [];
+            const timeString = new Date().toLocaleTimeString();
+
+            // 1. Запрос к USGS (США)
             try {
-                const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
-                const data = await res.json();
-                const timeString = new Date().toLocaleTimeString();
-                let feedHTML = `<div class="last-checked">🔄 Last check: ${timeString}</div>`;
-                let foundEvents = 0, alarmTriggered = false;
-
-                if (data && data.features) {
-                    for (const quake of data.features) {
-                        const [lon, lat] = quake.geometry.coordinates;
-                        const mag = quake.properties.mag;
-                        const place = quake.properties.place || "Region";
-                        const dist = calculateDistance(ALMATY_LAT, ALMATY_LON, lat, lon);
-
-                        if (dist <= 500) {
-                            foundEvents++;
-                            let badge = dist <= 30 ? "Critical" : (dist <= 100 ? "Warning" : "Monitoring");
-                            feedHTML += `<div class="quake-item"><b>${badge}</b> | ${place}<br>⚡ <b>${mag.toFixed(1)}</b> mag | 📏 ${dist.toFixed(0)} km</div>`;
-                            if (foundEvents >= 3) break;
-                        }
-
-                        if (dist <= 300 && mag >= 3.5 && !alarmTriggered) {
-                            alarmTriggered = true;
-                            handleAlarmState(dist, mag, place, dist <= 30);
-                        }
-                    }
-                    if (foundEvents === 0) feedHTML += `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 6px;">No seismic activity within 500 km.</div>`;
-                }
-                if (!document.body.classList.contains('alarm-active')) {
-                    document.getElementById('detailsText').innerHTML = feedHTML;
+                const resUSGS = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+                const dataUSGS = await resUSGS.json();
+                if (dataUSGS && dataUSGS.features) {
+                    dataUSGS.features.forEach(q => {
+                        allQuakes.push({
+                            source: 'USGS',
+                            lat: q.geometry.coordinates[1],
+                            lon: q.geometry.coordinates[0],
+                            mag: q.properties.mag,
+                            place: q.properties.place || 'Region',
+                            time: q.properties.time
+                        });
+                    });
                 }
             } catch (e) {
-                document.getElementById('lastCheckedTime').innerText = "⚠️ USGS sync error";
+                console.log('USGS fetch error');
+            }
+
+            // 2. Запрос к EMSC (Европа / Средиземноморье / Центральная Азия)
+            try {
+                const resEMSC = await fetch('https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20');
+                const dataEMSC = await resEMSC.json();
+                if (dataEMSC && dataEMSC.features) {
+                    dataEMSC.features.forEach(q => {
+                        allQuakes.push({
+                            source: 'EMSC',
+                            lat: q.properties.lat,
+                            lon: q.properties.lon,
+                            mag: q.properties.mag,
+                            place: q.properties.flynn_region || 'Region',
+                            time: new Date(q.properties.time).getTime()
+                        });
+                    });
+                }
+            } catch (e) {
+                console.log('EMSC fetch error');
+            }
+
+            let feedHTML = `<div class="last-checked">🔄 Last sync: ${timeString} (USGS + EMSC)</div>`;
+            let foundEvents = 0, alarmTriggered = false;
+
+            // Сортируем по времени (свежие сверху)
+            allQuakes.sort((a, b) => b.time - a.time);
+
+            if (allQuakes.length > 0) {
+                for (const quake of allQuakes) {
+                    const dist = calculateDistance(ALMATY_LAT, ALMATY_LON, quake.lat, quake.lon);
+
+                    if (dist <= 500) {
+                        foundEvents++;
+                        let badge = dist <= 30 ? "Critical" : (dist <= 100 ? "Warning" : "Monitoring");
+                        feedHTML += `<div class="quake-item"><b>[${quake.source}] ${badge}</b> | ${quake.place}<br>⚡ <b>${quake.mag.toFixed(1)}</b> mag | 📏 ${dist.toFixed(0)} km</div>`;
+                        if (foundEvents >= 4) break;
+                    }
+
+                    if (dist <= 300 && quake.mag >= 3.5 && !alarmTriggered) {
+                        alarmTriggered = true;
+                        handleAlarmState(dist, quake.mag, quake.place, dist <= 30);
+                    }
+                }
+            }
+
+            if (foundEvents === 0) {
+                feedHTML += `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 6px;">No seismic activity within 500 km.</div>`;
+            }
+
+            if (!document.body.classList.contains('alarm-active')) {
+                document.getElementById('detailsText').innerHTML = feedHTML;
             }
         }
     </script>
 </body>
 </html>
-
 
 
 
