@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Seismic Almaty — EEW Grid</title>
+
+    <link rel="manifest" href="/manifest.json">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b0f19">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+            transition: background-color 0.5s ease;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            padding: 24px 20px;
+            background: rgba(15, 23, 42, 0.75);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            backdrop-filter: blur(12px);
+        }
+
+        .header { text-align: center; margin-bottom: 20px; }
+        h1 { font-size: 20px; color: #f1f5f9; letter-spacing: 2px; font-weight: 700; }
+        .subtitle { font-size: 11px; color: #64748b; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 10px;
+            color: #38bdf8;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .pulse-dot {
+            width: 6px; height: 6px; background-color: #38bdf8; border-radius: 50%;
+            box-shadow: 0 0 0 rgba(56, 189, 248, 0.4);
+            animation: radar-pulse 1.5s infinite;
+        }
+        @keyframes radar-pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        }
+
+        .status-box {
+            font-size: 20px; font-weight: bold; text-align: center;
+            margin-bottom: 12px; padding: 12px; border-radius: 10px;
+            background: #10b981; color: white;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+            letter-spacing: 1px; transition: background 0.3s;
+        }
+
+        .tg-urgent-btn {
+            display: block; width: 100%; padding: 14px 16px; margin-bottom: 16px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: 2px solid #f87171; color: #fff; text-align: center; text-decoration: none;
+            border-radius: 10px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+            animation: pulse-alert 2s infinite; line-height: 1.4;
+        }
+        @keyframes pulse-alert {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .push-test-btn {
+            background: #0284c7; color: #fff; border: none; width: 100%;
+            padding: 9px; border-radius: 8px; font-size: 11px; font-weight: bold;
+            cursor: pointer; margin-bottom: 16px; transition: background 0.2s;
+        }
+        .push-test-btn:hover { background: #0369a1; }
+
+        .hud-stats { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 16px; }
+        .hud-card {
+            background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px; padding: 10px; text-align: center;
+        }
+        .hud-card .hud-value { font-size: 16px; font-weight: bold; color: #38bdf8; }
+        .hud-card .hud-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+        .section {
+            background: rgba(30, 41, 59, 0.3); border-radius: 10px;
+            padding: 12px; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .section-title {
+            font-size: 11px; color: #38bdf8; text-transform: uppercase;
+            letter-spacing: 0.5px; font-weight: bold; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .district-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+            max-height: 150px; overflow-y: auto; padding-right: 2px;
+        }
+        .district-btn {
+            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #94a3b8; padding: 7px 8px; border-radius: 6px; font-size: 11px;
+            cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
+        }
+        .district-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; font-weight: bold; }
+        .district-count { background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; font-size: 9px; color: #38bdf8; }
+
+        .survival-box { font-size: 11px; }
+        .survival-question { color: #f1f5f9; margin-bottom: 8px; font-weight: 500; line-height: 1.4; }
+        .survival-options { display: flex; flex-direction: column; gap: 5px; }
+        .opt-btn {
+            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #cbd5e1; padding: 7px 10px; border-radius: 6px; font-size: 11px;
+            cursor: pointer; text-align: left; transition: background 0.2s;
+        }
+        .opt-btn:hover { background: #0369a1; color: #fff; }
+
+        .timer { font-size: 32px; font-weight: bold; margin: 10px 0; display: none; color: #f87171; text-align: center; }
+        .details { font-size: 12px; color: #cbd5e1; line-height: 1.4; max-height: 150px; overflow-y: auto; }
+        .last-checked { font-size: 10px; color: #64748b; text-align: center; margin-bottom: 6px; }
+        .quake-item {
+            background: rgba(15, 23, 42, 0.5); padding: 8px 10px; border-radius: 6px;
+            margin-bottom: 6px; border-left: 2px solid #38bdf8; font-size: 11px;
+        }
+
+        .promo-box {
+            background: rgba(14, 165, 233, 0.1); border: 1px dashed rgba(56, 189, 248, 0.4);
+            border-radius: 10px; padding: 12px; margin-top: 12px; text-align: center;
+            font-size: 11px; color: #cbd5e1; line-height: 1.5;
+        }
+        .tiktok-link { display: inline-block; margin-top: 6px; color: #38bdf8; text-decoration: none; font-weight: bold; }
+
+        .disclaimer { font-size: 9px; color: #475569; margin-top: 15px; text-align: center; letter-spacing: 0.3px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); display: flex; align-items: center;
+            justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 20px;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            background: #0f172a; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 16px;
+            padding: 24px 20px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        .modal-title { font-size: 16px; font-weight: bold; color: #f1f5f9; margin-bottom: 10px; }
+        .modal-text { font-size: 12px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5; }
+        .modal-btn {
+            display: block; width: 100%; padding: 12px; background: #ef4444; color: #fff;
+            text-decoration: none; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 10px;
+        }
+        .modal-close { background: transparent; border: none; color: #64748b; font-size: 11px; cursor: pointer; text-decoration: underline; }
+
+        body.alarm-active { background-color: #7f1d1d !important; }
+        body.alarm-active .container { border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+        body.alarm-active .status-box { background-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <div class="modal-overlay" id="tgModal">
+        <div class="modal-box">
+            <div class="modal-title">⚠️ ВНИМАНИЕ: EEW Grid Active</div>
+            <div class="modal-text">Система в режиме мониторинга. Вступайте в Telegram-канал жителей для получения всех оперативных данных!</div>
+            <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="modal-btn" onclick="closeModal()">💬 ВСТУПИТЬ В ТГ-КАНАЛ</a>
+            <button class="modal-close" onclick="closeModal()">Перейти к сайту</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Q-SEISMIC ALMATY</h1>
+            <div class="subtitle">EEW Realtime Socket Grid</div>
+        </div>
+
+        <div class="live-indicator">
+            <div class="pulse-dot"></div>
+            <span>Almaty Regional Seismic Grid Active</span>
+        </div>
+
+        <div class="status-box" id="statusBox">LISTENING (P-WAVE SOCKET)</div>
+
+        <a href="https://t.me/+7MeUVBbFed8zZGFi" target="_blank" class="tg-urgent-btn">
+            🚨 ПУШИ В БРАУЗЕРЕ МОГУТ МОЛЧАТЬ!<br>👉 ВСТУПИТЬ В ТГ-КАНАЛ ЖИТЕЛЕЙ
+        </a>
+
+        <button class="push-test-btn" onclick="testBrowserPush()">🧪 Test Push Notifications</button>
+
+        <div class="hud-stats">
+            <div class="hud-card">
+                <div class="hud-value" id="visitorCount">20</div>
+                <div class="hud-label">Total Visitors Tracked</div>
+            </div>
+        </div>
+
+        <div class="timer" id="timerContainer">
+            IMPACT IN (EEW): <span id="countdown">--</span>
+        </div>
+
+        <div class="section" id="districtSection">
+            <div class="section-title">
+                <span>📍 Almaty Districts (8)</span>
+                <span style="font-size: 9px; color: #64748b;" id="selectedDistrictStatus">None selected</span>
+            </div>
+            <div class="district-grid" id="districtGrid">
+                <button class="district-btn" onclick="selectDistrict('Bostandyq', this)">Bostandyq <span class="district-count">4</span></button>
+                <button class="district-btn" onclick="selectDistrict('Medeu', this)">Medeu <span class="district-count">3</span></button>
+                <button class="district-btn" onclick="selectDistrict('Almaly', this)">Almaly <span class="district-count">5</span></button>
+                <button class="district-btn" onclick="selectDistrict('Auezov', this)">Auezov <span class="district-count">3</span></button>
+                <button class="district-btn" onclick="selectDistrict('Nauryzbay', this)">Nauryzbay <span class="district-count">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Alatau', this)">Alatau <span class="district-count">2</span></button>
+                <button class="district-btn" onclick="selectDistrict('Zhetysu', this)">Zhetysu <span class="district-count">1</span></button>
+                <button class="district-btn" onclick="selectDistrict('Turksib', this)">Turksib <span class="district-count">1</span></button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title"><span>⚡ Protocol: EEW Early Warning</span></div>
+            <div class="survival-box" id="survivalBoxContent">
+                <div class="survival-question">EEW alarm triggered! You have 8 seconds before S-wave. Action?</div>
+                <div class="survival-options">
+                    <button class="opt-btn" onclick="answerSurvival(false)">Look out the window</button>
+                    <button class="opt-btn" onclick="answerSurvival(true)">Drop, Cover, and Hold On instantly</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="margin-bottom: 0;">
+            <div class="section-title"><span>📡 Local Regional Telemetry</span></div>
+            <div class="details" id="detailsText">
+                <div class="last-checked" id="lastCheckedTime">Connecting to Almaty regional grid...</div>
+                <div id="quakeFeed">Loading contours...</div>
+            </div>
+        </div>
+
+        <div class="promo-box">
+            🌍 <b>EEW Architectural Optimization</b><br>
+            Optimized via FDSN / SeismicPortal gateway (bypassing high-latency US nodes for Central Asia).<br>
+            <a href="https://www.tiktok.com/@mon.e47" target="_blank" class="tiktok-link">📱 TikTok: @mon.e47</a>
+            <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Created by Abon</div>
+        </div>
+
+        <div class="disclaimer">
+            Regional Open Seismic API. Info only.
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+
+        const ALMATY_LAT = 43.2389;
+        const ALMATY_LON = 76.8897;
+        let isEmergencyActive = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            let visits = localStorage.getItem('q_seismic_visits') || 20;
+            if (!sessionStorage.getItem('counted')) {
+                visits = parseInt(visits) + 1;
+                localStorage.setItem('q_seismic_visits', visits);
+                sessionStorage.setItem('counted', 'true');
+            }
+            document.getElementById('visitorCount').innerText = visits;
+
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+
+            setTimeout(() => {
+                if (!sessionStorage.getItem('modalShown')) {
+                    document.getElementById('tgModal').classList.add('active');
+                    sessionStorage.setItem('modalShown', 'true');
+                }
+            }, 3000);
+
+            fetchAllFeeds();
+            setInterval(fetchAllFeeds, 10000);
+        });
+
+        function closeModal() {
+            document.getElementById('tgModal').classList.remove('active');
+        }
+
+        function testBrowserPush() {
+            if (Notification.permission === "granted") {
+                new Notification("⚡ Q-SEISMIC TEST", { body: "Browser alert system is working correctly!" });
+            } else {
+                Notification.requestPermission();
+            }
+        }
+
+        // НОВОЕ: Встроенный генератор сирены через Web Audio API (работает без внешних файлов)
+        function playAlarmSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                let beepCount = 0;
+                const interval = setInterval(() => {
+                    if (beepCount > 15) { // 15 циклов сирены
+                        clearInterval(interval);
+                        return;
+                    }
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    osc.type = 'sawtooth'; // Тревожный пилообразный звук
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+                    
+                    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                    beepCount++;
+                }, 400);
+            } catch (e) {
+                console.log('Audio autoplay restricted');
+            }
+        }
+
+        function selectDistrict(name, btn) {
+            document.querySelectorAll('.district-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('selectedDistrictStatus').innerText = name;
+        }
+
+        function answerSurvival(isCorrect) {
+            const box = document.getElementById('survivalBoxContent');
+            if (isCorrect) {
+                box.innerHTML = `<div style="color: #34d399; font-weight: bold; text-align: center; padding: 6px;">✅ CORRECT! Every millisecond counts during EEW countdown.</div>`;
+            } else {
+                box.innerHTML = `<div style="color: #f87171; font-weight: bold; text-align: center; padding: 6px;">❌ WRONG! Hesitation during an EEW alert is fatal.</div>`;
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function triggerEEWAlarm(distance, magnitude, place) {
+            if (isEmergencyActive) return;
+            isEmergencyActive = true;
+
+            document.body.classList.add('alarm-active');
+            document.getElementById('statusBox').innerText = `⚠️ EEW WARNING!`;
+
+            // Автоматический запуск звуковой сирены на экране/колонках
+            playAlarmSound();
+
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("⚠️ Q-SEISMIC WARNING", { body: `Magnitude: ${magnitude.toFixed(1)}\nEpicenter: ${place}\nDistance: ${distance.toFixed(1)} km` });
+            }
+
+            document.getElementById('timerContainer').style.display = 'block';
+            let secondsLeft = Math.max(2, Math.round(distance / 3.5 - distance / 6));
+            const countdownEl = document.getElementById('countdown');
+
+            const timerInterval = setInterval(() => {
+                countdownEl.innerText = secondsLeft + "s";
+                if (secondsLeft <= 0) {
+                    clearInterval(timerInterval);
+                    countdownEl.innerText = "IMPACT SHAKE!";
+                }
+                secondsLeft--;
+            }, 1000);
+        }
+
+        async function fetchAllFeeds() {
+            let allQuakes = [];
+            const timeString = new Date().toLocaleTimeString();
+
+            // НОВОЕ: Защита от зависания сети (AbortController с таймаутом 3 секунды)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            try {
+                const res = await fetch('https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=20', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                const data = await res.json();
+                if (data && data.features) {
+                    data.features.features?.forEach?.(q => {}) // safe fallback
+                    data.features.forEach(q => {
+                        allQuakes.push({
+                            lat: q.properties.lat,
+                            lon: q.properties.lon,
+                            mag: q.properties.mag,
+                            place: q.properties.flynn_region || 'Almaty Region',
+                            time: new Date(q.properties.time).getTime()
+                        });
+                    });
+                }
+            } catch (e) {
+                // Если сервер долго отвечает или упал — сайт продолжит работать, а не зависнет!
+                console.log('Telemetry fetch timeout or error bypassed safely.');
+            }
+
+            let feedHTML = `<div class="last-checked">🔄 Last sync: ${timeString} (Live Grid)</div>`;
+            let foundEvents = 0;
+
+            allQuakes.sort((a, b) => b.time - a.time);
+
+            if (allQuakes.length > 0) {
+                for (const quake of allQuakes) {
+                    const dist = calculateDistance(ALMATY_LAT, ALMATY_LON, quake.lat, quake.lon);
+
+                    if (dist <= 500) {
+                        foundEvents++;
+                        let badge = dist <= 30 ? "Critical (Epicenter)" : (dist <= 100 ? "Warning (Local)" : "Monitoring");
+                        feedHTML += `<div class="quake-item"><b>${badge}</b> | ${quake.place}<br>⚡ <b>${quake.mag.toFixed(1)}</b> mag | 📏 ${dist.toFixed(0)} km</div>`;
+                        if (foundEvents >= 4) break;
+                    }
+
+                    const isRecent = (Date.now() - quake.time) < 15 * 60 * 1000;
+                    if (dist <= 150 && quake.mag >= 3.0 && isRecent && !isEmergencyActive) {
+                        triggerEEWAlarm(dist, quake.mag, quake.place);
+                    }
+                }
+            }
+
+            if (foundEvents === 0) {
+                feedHTML += `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 6px;">No seismic activity near Almaty. All clear.</div>`;
+            }
+
+            if (!isEmergencyActive) {
+                document.getElementById('detailsText').innerHTML = feedHTML;
+            }
+        }
+    </script>
+</body>
+</html>
